@@ -1,5 +1,5 @@
-PREFIX = /usr/local/bin
-DESTDIR =
+PREFIX=/usr/local/bin
+DESTDIR=
 CC?=gcc
 
 NGmerge: NGmerge.c NGmerge.h

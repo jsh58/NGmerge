@@ -31,7 +31,7 @@ void printVersion(void) {
  * Prints usage information.
  */
 void usage(void) {
-  fprintf(stderr, "Usage: ./NGmerge {-%c <file> -%c <file>", FIRST, SECOND);
+  fprintf(stderr, "Usage: NGmerge {-%c <file> -%c <file>", FIRST, SECOND);
   fprintf(stderr, " -%c <file>}  [optional arguments]\n", OUTFILE);
   fprintf(stderr, "Required arguments:\n");
   fprintf(stderr, "  -%c  <file>       Input FASTQ file with reads from forward direction\n", FIRST);

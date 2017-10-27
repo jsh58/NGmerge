@@ -637,22 +637,51 @@ void printRes(File out, File log, bool logOpt, File dove,
   if (doveOpt)
     printDove(dove, header, read1, read2, len1, len2,
       pos, lock + DOVE);
-  if (alnOpt) {
+
+  // print formatted alignments
+  if (alnOpt == 1) {
     omp_set_lock(lock + ALN);
-    if (alnOpt == 1)
-      printAln(aln, header, read1, read2, len1, len2, pos);
-    else if (alnOpt == 2)
-      printAln2(aln, header, read1, read2, len1, len2, pos);
+    printAln(aln, header, read1, read2, len1, len2, pos);
+
+    // create stitched sequence
+    if (fjoin)
+      createSeq(read1[SEQ], read2[SEQ + EXTRA + 1], read1[QUAL],
+        read2[QUAL + EXTRA], len1, len2, pos, offset);
+    else
+      createSeq2(read1[SEQ], read2[SEQ + EXTRA + 1], read1[QUAL],
+        read2[QUAL + EXTRA], len1, len2, pos, offset, match, mism);
+
+    // print merged seq to alignment output
+    fprintf(aln.f, "merged\nseq:     ");
+    for (int i = 0; i > pos; i--)
+      fputc(' ', aln.f);
+    fprintf(aln.f, "%s\n", read1[SEQ]);
+    fprintf(aln.f, "qual:    ");
+    for (int i = 0; i > pos; i--)
+      fputc(' ', aln.f);
+    fprintf(aln.f, "%s\n\n\n", read1[QUAL]);
+
     omp_unset_lock(lock + ALN);
+
+  } else {
+
+    // print stitch differences
+    if (alnOpt == 2) {
+      omp_set_lock(lock + ALN);
+      printAln2(aln, header, read1, read2, len1, len2, pos);
+      omp_unset_lock(lock + ALN);
+    }
+
+    // create stitched sequence
+    if (fjoin)
+      createSeq(read1[SEQ], read2[SEQ + EXTRA + 1], read1[QUAL],
+        read2[QUAL + EXTRA], len1, len2, pos, offset);
+    else
+      createSeq2(read1[SEQ], read2[SEQ + EXTRA + 1], read1[QUAL],
+        read2[QUAL + EXTRA], len1, len2, pos, offset, match, mism);
   }
 
   // print stitched sequence
-  if (fjoin)
-    createSeq(read1[SEQ], read2[SEQ + EXTRA + 1], read1[QUAL],
-      read2[QUAL + EXTRA], len1, len2, pos, offset);
-  else
-    createSeq2(read1[SEQ], read2[SEQ + EXTRA + 1], read1[QUAL],
-      read2[QUAL + EXTRA], len1, len2, pos, offset, match, mism);
   omp_set_lock(lock + OUT);
   if (gz)
     gzprintf(out.gzf, "%s\n%s\n+\n%s\n", header,
@@ -662,19 +691,6 @@ void printRes(File out, File log, bool logOpt, File dove,
       read1[SEQ], read1[QUAL]);
   omp_unset_lock(lock + OUT);
 
-  // print to alignment output too
-  if (alnOpt == 1) {
-    omp_set_lock(lock + ALN);
-    fprintf(aln.f, "merged\nseq:     ");
-    for (int i = 0; i > pos; i--)
-      fputc(' ', aln.f);
-    fprintf(aln.f, "%s\n", read1[SEQ]);
-    fprintf(aln.f, "qual:    ");
-    for (int i = 0; i > pos; i--)
-      fputc(' ', aln.f);
-    fprintf(aln.f, "%s\n\n\n", read1[QUAL]);
-    omp_unset_lock(lock + ALN);
-  }
 }
 
 /* void printFail()

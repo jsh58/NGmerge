@@ -563,11 +563,12 @@ void createSeq(char* seq1, char* seq2, char* qual1,
       qual1[i] = qual2[i-pos];
     } else if (seq1[i] != seq2[i-pos]) {
       // mismatch:
-      //   - base matches higher quality score
-      //     (tie goes to R1)
+      //   - base matches higher quality score or equal
+      //     quality score that is closer to 5' end
       //   - quality score calculated as diff (fastq-join
       //     method) or copied from mism array
-      if (qual1[i] < qual2[i-pos])
+      if (qual1[i] < qual2[i-pos] ||
+          (qual1[i] == qual2[i-pos] && i >= len / 2.0) )
         seq1[i] = seq2[i-pos];
       if (fjoin)
         qual1[i] = abs(qual2[i-pos] - qual1[i]) + offset;

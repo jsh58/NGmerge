@@ -12,6 +12,12 @@
 #     are produced: one each for unmerged ends,
 #     merge matches, merge mismatches, and merge
 #     mismatches due to Ns
+#     - distinguising unmerged from merged is done
+#       by the length argument (-l)
+#     - distinguising matches/mismatches/Ns is done
+#       by the mismatch file (-m), which is usually
+#       produced by NGmerge (-j <file> -b) or by
+#       findDiffs.py (or findDiffs_SP.py)
 
 import sys
 import gzip
@@ -82,6 +88,9 @@ def loadMismatch(filename, d):
   f = openRead(filename)
   for line in f:
     spl = line.rstrip().split('\t')
+    if len(spl) < 6:
+      sys.stderr.write('Error! Poorly formatted mismatch record:\n' + line)
+      sys.exit(-1)
     if spl[0] in d:
       d[spl[0]].append(spl[1:])
     else:
@@ -265,7 +274,8 @@ def main():
     metavar='<int>', help='Lengths of original PE reads (for asymmetric ' +
     'reads, specify comma-separated values: <int>,<int>)')
   optional.add_argument('-m', dest='misfile', metavar='<file>',
-    help='File listing merge mismatches')
+    help='File listing merge mismatches (produced by NGmerge ' +
+    '[-j <file> -b] or by findDiffs.py')
 
   other = parser.add_argument_group('Other options')
   other.add_argument('-q', dest='maxQual', type=int, default=40,

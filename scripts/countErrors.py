@@ -248,7 +248,8 @@ def processSAM(fIn, fOut, len_R1, len_R2, mismatch,
 def main():
   '''Main.'''
   # Set command-line arguments
-  parser = argparse.ArgumentParser(prog=sys.argv[0], add_help=False)
+  parser = argparse.ArgumentParser(prog='python ' + sys.argv[0],
+    add_help=False)
   parser._action_groups.pop()
 
   required = parser.add_argument_group('Required arguments')

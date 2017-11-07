@@ -62,7 +62,8 @@ def revComp(dna):
     elif nuc == 'T': comp = 'A'
     elif nuc == 'N': comp = 'N'
     else:
-      print 'Error! Unknown nucleotide: %s' % nuc
+      sys.stderr.write('Error! Unknown nucleotide: %s\n' % nuc)
+      sys.exit(-1)
     rc += comp
   return rc
 

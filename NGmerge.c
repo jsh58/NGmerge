@@ -8,7 +8,7 @@
   - 'adapter-removal': removing adapters (3' overhangs
      of stitched alignment) from individual reads
 
-  Version 0.2_dev
+  Version 0.2
 */
 
 #include <stdio.h>

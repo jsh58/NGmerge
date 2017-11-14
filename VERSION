@@ -1,0 +1,12 @@
+NGmerge
+
+Copyright (C) 2017 John M. Gaspar (jsh58@wildcats.unh.edu)
+
+Version 0.2 - Nov 14, 2017
+  * Fix data race in alignments output
+  * Combine merged sequence functions for default and fastq-join modes
+
+Version 0.1 - Oct 11, 2017
+  * First public release on GitHub
+    (based on stitch in AmpliconTools [github.com/jsh58/AmpliconTools]
+      and stitch v0.8 [github.com/jsh58/stitch])

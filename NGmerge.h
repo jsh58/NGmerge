@@ -1,10 +1,10 @@
 /*
   John M. Gaspar (jsh58@wildcats.unh.edu)
-  April 2015 (updated July 2016, Apr. 2017, June 2017)
+  April 2015 (updated 2016, 2017)
 
   Header file for NGmerge.c.
 */
-#define VERSION     "0.1"
+#define VERSION     "0.2"
 
 // constants
 #define MAX_SIZE    1024    // maximum length of input lines (incl. seq/qual)

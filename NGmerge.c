@@ -1,12 +1,14 @@
 /*
   John M. Gaspar (jsh58@wildcats.unh.edu)
-  April 2015 (updated July 2016, Apr. 2017, June 2017)
+  April 2015 (updated 2016, 2017)
 
   Analyzing paired-end reads for overlaps. Two modes:
   - 'stitch': producing a single, merged read for reads
      with sufficient overlaps
   - 'adapter-removal': removing adapters (3' overhangs
      of stitched alignment) from individual reads
+
+  Version 0.2
 */
 
 #include <stdio.h>
@@ -535,26 +537,27 @@ void printAln(File aln, char* header, char** read1,
   fprintf(aln.f, "%s\n\n", read2[QUAL + EXTRA]);
 }
 
-/* void createSeq2()
+/* void createSeq()
  * Create stitched sequence (into seq1, qual1).
- *   Use empirical error profiles for quality scores.
+ *   Use empirical error profiles for quality scores,
+ *   or 'fastq-join' method.
  */
-void createSeq2(char* seq1, char* seq2, char* qual1,
+void createSeq(char* seq1, char* seq2, char* qual1,
     char* qual2, int len1, int len2, int pos,
-    int offset, char** match, char** mism) {
+    int offset, char** match, char** mism, bool fjoin) {
   int len = len2 + pos;  // length of stitched sequence
   for (int i = 0; i < len; i++) {
-    if (i - pos < 0)
+    if (i - pos < 0) {
       // 1st read only: continue
       continue;
-    else if (i >= len1) {
+    } else if (i >= len1) {
       // 2nd read only: copy seq and qual
       seq1[i] = seq2[i-pos];
       qual1[i] = qual2[i-pos];
-    } else if (seq2[i-pos] == 'N')
+    } else if (seq2[i-pos] == 'N') {
       // 2nd read 'N': continue
       continue;
-    else if (seq1[i] == 'N') {
+    } else if (seq1[i] == 'N') {
       // 1st read 'N': copy seq and qual
       seq1[i] = seq2[i-pos];
       qual1[i] = qual2[i-pos];
@@ -562,55 +565,27 @@ void createSeq2(char* seq1, char* seq2, char* qual1,
       // mismatch:
       //   - base matches higher quality score or equal
       //     quality score that is closer to 5' end
-      //   - quality score copied from mism array
+      //   - quality score calculated as diff (fastq-join
+      //     method) or copied from mism array
       if (qual1[i] < qual2[i-pos] ||
-          (qual1[i] == qual2[i-pos] && i >= len2 - i + pos) )
+          (qual1[i] == qual2[i-pos] && i >= len / 2.0) )
         seq1[i] = seq2[i-pos];
-      qual1[i] = mism[ (int) qual1[i] - offset ]
-        [ (int) qual2[i-pos] - offset ] + offset;
-    } else
+      if (fjoin)
+        qual1[i] = abs(qual2[i-pos] - qual1[i]) + offset;
+      else
+        qual1[i] = mism[ (int) qual1[i] - offset ]
+          [ (int) qual2[i-pos] - offset ] + offset;
+    } else {
       // match:
-      //   - quality score copied from match array
-      qual1[i] = match[ (int) qual1[i] - offset ]
-        [ (int) qual2[i-pos] - offset ] + offset;
-
-  }
-  seq1[len] = '\0';
-  qual1[len] = '\0';
-}
-
-/* void createSeq()
- * Create stitched sequence (into seq1, qual1).
- *   Use 'fastq-join' method for quality scores.
- */
-void createSeq(char* seq1, char* seq2, char* qual1, char* qual2,
-    int len1, int len2, int pos, int offset) {
-  int len = len2 + pos;  // length of stitched sequence
-  for (int i = 0; i < len; i++) {
-    if (i - pos < 0)
-      // 1st read only: continue
-      continue;
-    else if (i >= len1) {
-      // 2nd read only: copy seq and qual
-      seq1[i] = seq2[i-pos];
-      qual1[i] = qual2[i-pos];
-    } else if (seq1[i] != seq2[i-pos]) {
-      // disagreements favor higher quality score or
-      //   equal quality score that is not an 'N' or
-      //   is closer to 5' end; reduce qual scores
-      if (qual1[i] < qual2[i-pos] ||
-          (qual1[i] == qual2[i-pos] &&
-          ((i >= len2 - i + pos && seq2[i-pos] != 'N')
-          || seq1[i] == 'N') ) ) {
-        qual1[i] = (seq1[i] == 'N' ? qual2[i-pos]
-          : qual2[i-pos] - qual1[i] + offset);
-        seq1[i] = seq2[i-pos];
-      } else if (seq2[i-pos] != 'N')
-        qual1[i] -= qual2[i-pos] - offset;
-    } else if (qual1[i] < qual2[i-pos])
-      // seq agreement: use higher qual score
-      qual1[i] = qual2[i-pos];
-
+      //   - quality score calculated as max (fastq-join
+      //     method) or copied from match array
+      if (fjoin) {
+        if (qual1[i] < qual2[i-pos])
+          qual1[i] = qual2[i-pos];
+      } else
+        qual1[i] = match[ (int) qual1[i] - offset ]
+          [ (int) qual2[i-pos] - offset ] + offset;
+    }
   }
   seq1[len] = '\0';
   qual1[len] = '\0';
@@ -637,22 +612,45 @@ void printRes(File out, File log, bool logOpt, File dove,
   if (doveOpt)
     printDove(dove, header, read1, read2, len1, len2,
       pos, lock + DOVE);
-  if (alnOpt) {
+
+  // print formatted alignments
+  if (alnOpt == 1) {
     omp_set_lock(lock + ALN);
-    if (alnOpt == 1)
-      printAln(aln, header, read1, read2, len1, len2, pos);
-    else if (alnOpt == 2)
-      printAln2(aln, header, read1, read2, len1, len2, pos);
+    printAln(aln, header, read1, read2, len1, len2, pos);
+
+    // create stitched sequence
+    createSeq(read1[SEQ], read2[SEQ + EXTRA + 1],
+      read1[QUAL], read2[QUAL + EXTRA], len1, len2,
+      pos, offset, match, mism, fjoin);
+
+    // print merged seq to alignment output
+    fprintf(aln.f, "merged\nseq:     ");
+    for (int i = 0; i > pos; i--)
+      fputc(' ', aln.f);
+    fprintf(aln.f, "%s\n", read1[SEQ]);
+    fprintf(aln.f, "qual:    ");
+    for (int i = 0; i > pos; i--)
+      fputc(' ', aln.f);
+    fprintf(aln.f, "%s\n\n\n", read1[QUAL]);
+
     omp_unset_lock(lock + ALN);
+
+  } else {
+
+    // print stitch differences
+    if (alnOpt == 2) {
+      omp_set_lock(lock + ALN);
+      printAln2(aln, header, read1, read2, len1, len2, pos);
+      omp_unset_lock(lock + ALN);
+    }
+
+    // create stitched sequence
+    createSeq(read1[SEQ], read2[SEQ + EXTRA + 1],
+      read1[QUAL], read2[QUAL + EXTRA], len1, len2,
+      pos, offset, match, mism, fjoin);
   }
 
   // print stitched sequence
-  if (fjoin)
-    createSeq(read1[SEQ], read2[SEQ + EXTRA + 1], read1[QUAL],
-      read2[QUAL + EXTRA], len1, len2, pos, offset);
-  else
-    createSeq2(read1[SEQ], read2[SEQ + EXTRA + 1], read1[QUAL],
-      read2[QUAL + EXTRA], len1, len2, pos, offset, match, mism);
   omp_set_lock(lock + OUT);
   if (gz)
     gzprintf(out.gzf, "%s\n%s\n+\n%s\n", header,
@@ -662,19 +660,6 @@ void printRes(File out, File log, bool logOpt, File dove,
       read1[SEQ], read1[QUAL]);
   omp_unset_lock(lock + OUT);
 
-  // print to alignment output too
-  if (alnOpt == 1) {
-    omp_set_lock(lock + ALN);
-    fprintf(aln.f, "merged\nseq:     ");
-    for (int i = 0; i > pos; i--)
-      fputc(' ', aln.f);
-    fprintf(aln.f, "%s\n", read1[SEQ]);
-    fprintf(aln.f, "qual:    ");
-    for (int i = 0; i > pos; i--)
-      fputc(' ', aln.f);
-    fprintf(aln.f, "%s\n\n\n", read1[QUAL]);
-    omp_unset_lock(lock + ALN);
-  }
 }
 
 /* void printFail()

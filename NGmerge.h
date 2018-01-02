@@ -4,7 +4,7 @@
 
   Header file for NGmerge.c.
 */
-#define VERSION     "0.2"
+#define VERSION     "0.2_dev"
 
 // constants
 #define MAX_SIZE    1024    // maximum length of input lines (incl. seq/qual)
@@ -92,7 +92,7 @@ const char* errMsg[] = { "Need input/output files",
   "Overlap must be greater than 0",
   "Mismatch must be in [0,1)",
   "Input file does not follow fastq format",
-  "Quality scores outside of set range",
+  ": quality score outside of set range",
   "Failure in ungetc() call",
   "Cannot pipe in gzip compressed file (use zcat instead)",
   "Number of threads must be >= 1",

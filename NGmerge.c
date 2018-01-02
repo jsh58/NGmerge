@@ -8,7 +8,7 @@
   - 'adapter-removal': removing adapters (3' overhangs
      of stitched alignment) from individual reads
 
-  Version 0.2
+  Version 0.2_dev
 */
 
 #include <stdio.h>
@@ -167,8 +167,12 @@ void checkQual(char* qual, int len, int offset,
     int maxQual) {
   for (int i = 0; i < len; i++)
     // error if qual < 0 or qual > maxQual
-    if (qual[i] < offset || qual[i] > offset + maxQual)
-      exit(error("", ERROFFSET));
+    if (qual[i] < offset || qual[i] > offset + maxQual) {
+      char* msg = (char*) memalloc(MAX_SIZE);
+      sprintf(msg, "(range [0, %d], offset %d)  '%c'",
+        maxQual, offset, qual[i]);
+      exit(error(msg, ERROFFSET));
+    }
 }
 
 /* void processSeq()

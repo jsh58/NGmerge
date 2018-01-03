@@ -75,7 +75,7 @@ enum omp_locks { OUT, UN, LOG, DOVE, ALN, OMP_LOCKS };
 enum errCode { ERRFILE, ERROPEN, ERRCLOSE, ERROPENW, ERRUNK,
   ERRMEM, ERRSEQ, ERRQUAL, ERRHEAD, ERRINT, ERRFLOAT, ERRPARAM,
   ERROVER, ERRMISM, ERRFASTQ, ERROFFSET, ERRUNGET, ERRGZIP,
-  ERRTHREAD, ERRNAME, ERRRANGE, DEFERR
+  ERRTHREAD, ERRNAME, ERRRANGE, ERRDEFQ, DEFERR
 };
 const char* errMsg[] = { "Need input/output files",
   ": cannot open file for reading",
@@ -97,7 +97,8 @@ const char* errMsg[] = { "Need input/output files",
   "Cannot pipe in gzip compressed file (use zcat instead)",
   "Number of threads must be >= 1",
   ": output filename cannot start with '-'",
-  "Quality score file missing values for score range",
+  ": file missing values for quality score range",
+  "Cannot increase max. quality score with default error profile",
   "Unknown error"
 };
 

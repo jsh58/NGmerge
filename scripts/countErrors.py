@@ -12,9 +12,9 @@
 #     are produced: one each for unmerged ends,
 #     merge matches, merge mismatches, and merge
 #     mismatches due to Ns
-#     - distinguising unmerged from merged is done
+#     - distinguishing unmerged from merged is done
 #       by the length argument (-l)
-#     - distinguising matches/mismatches/Ns is done
+#     - distinguishing matches/mismatches/Ns is done
 #       by the mismatch file (-m), which is usually
 #       produced by NGmerge (-j <file> -b) or by
 #       findDiffs.py (or findDiffs_SP.py)

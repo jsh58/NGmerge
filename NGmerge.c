@@ -32,7 +32,7 @@ void printVersion(void) {
 /* void usage()
  * Prints usage information.
  */
-void usage(void) {
+void usage(int exitval) {
   fprintf(stderr, "Usage: NGmerge {-%c <file> -%c <file>", FIRST, SECOND);
   fprintf(stderr, " -%c <file>}  [optional arguments]\n", OUTFILE);
   fprintf(stderr, "Required arguments:\n");
@@ -64,7 +64,7 @@ void usage(void) {
   fprintf(stderr, "  -%c  <int>        Maximum input quality score (0-based; def. %d)\n", SETQUAL, MAXQUAL);
   fprintf(stderr, "  -%c  <int>        Number of threads to use (def. %d)\n", THREADS, DEFTHR);
   fprintf(stderr, "  -%c               Option to print status updates/counts to stderr\n", VERBOSE);
-  exit(-1);
+  exit(exitval);
 }
 
 /* int error()
@@ -1159,7 +1159,7 @@ void getArgs(int argc, char** argv) {
   int c;
   while ( (c = getopt_long(argc, argv, OPTIONS, long_options, NULL)) != -1 )
     switch (c) {
-      case HELP: usage(); break;
+      case HELP: usage(0); break;
       case VERSOPT: printVersion(); break;
       case MAXOPT: maxLen = false; break;
       case DOVEOPT: dovetail = true; break;
@@ -1192,7 +1192,7 @@ void getArgs(int argc, char** argv) {
   // check for argument errors
   if (outFile == NULL || inFile1 == NULL) {
     error("", ERRFILE);
-    usage();
+    usage(-1);
   }
   bool inter = false;  // interleaved input
   if (inFile2 == NULL) {

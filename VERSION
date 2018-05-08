@@ -2,6 +2,10 @@ NGmerge
 
 Copyright (C) 2017 John M. Gaspar (jsh58@wildcats.unh.edu)
 
+Version 0.3 - May 8, 2018
+  * Update Makefile with bioconda friendly changes
+  * NGmerge -h returns 0
+
 Version 0.2 - Nov 14, 2017
   * Fix data race in alignments output
   * Combine merged sequence functions for default and fastq-join modes

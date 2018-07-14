@@ -1,20 +1,20 @@
 # NGmerge: merging paired-end reads and removing sequencing adapters
 
 ## Table of Contents
-* [Introduction](#intro)<br>
+[Introduction](#intro)<br>
   * [Quick start](#quick)<br>
   * [Software compilation](#compile)<br>
   * [Usage message](#usage)<br>
-* [Alignment method](#align)<br>
-* [Stitch mode](#stitch)<br>
+[Alignment method](#align)<br>
+[Stitch mode](#stitch)<br>
   * [I/O files and options](#stitch-io)<br>
   * [Alignment parameters](#stitch-aln)<br>
   * [Quality score profile options](#stitch-qual)<br>
-* [Adapter-removal mode](#adapter)<br>
+[Adapter-removal mode](#adapter)<br>
   * [I/O files and options](#adapter-io)<br>
   * [Alignment parameters](#adapter-aln)<br>
-* [Miscellaneous](#misc)<br>
-* [Contact](#contact)<br>
+[Miscellaneous](#misc)<br>
+[Contact](#contact)<br>
 
 
 ## Introduction <a name="intro"></a>
@@ -39,13 +39,14 @@ Given:
 
 Looking for:
 * Merged reads (Fig. 1A)
-
-    $ ./NGmerge -1 sample_R1.fastq.gz -2 sample_R2.fastq.gz -o sample.fastq.gz
+```
+$ ./NGmerge  -1 sample_R1.fastq.gz  -2 sample_R2.fastq.gz  -o sample.fastq.gz
+```
 
 * Reads with adapters removed (Fig. 1B)
-
-    $ ./NGmerge -1 sample_R1.fastq.gz -2 sample_R2.fastq.gz -o sample_noadapters -a
-
+```
+$ ./NGmerge  -a  -1 sample_R1.fastq.gz  -2 sample_R2.fastq.gz  -o sample_noadapters
+```
 (the output files are `sample_noadapters_1.fastq.gz` and `sample_noadapters_2.fastq.gz`)
 
 
@@ -53,9 +54,9 @@ Looking for:
 
 The software can be downloaded from [GitHub](https://github.com/jsh58/NGmerge). (but you're already here! congratulations!)
 
-A Makefile is provided for compilation with [GCC](https://gcc.gnu.org/releases.html), and both [zlib](http://zlib.net) and [OpenMP](https://www.openmp.org/) are also required.  To compile, run `make` in the folder in which the software was downloaded.
+A Makefile is provided for compilation with [GCC](https://gcc.gnu.org/releases.html), and both [zlib](http://zlib.net) and [OpenMP](https://www.openmp.org/) are also required.  The program has been tested after compilation with GCC 6.3.0, zlib 1.2.8, and OpenMP 4.0.
 
-The program has been tested after compilation with GCC 6.3.0, zlib 1.2.8, and OpenMP 4.0.
+To compile, run `make` in the folder in which the software was downloaded.
 
 
 ### Usage message <a name="usage"></a>
@@ -102,9 +103,9 @@ NGmerge begins by aligning a pair of reads (R1, R2) such that the minimum overla
 
 <figure>
   <img src="figures/figure2.png" alt="Alignment method of NGmerge" width="400">
-  <figcaption><strong>Figure 2.</strong>  Alignments considered by NGmerge.  <strong>A:</strong> Default alignments range from those with the minimal overlap length (set by `-m`), to complete overlaps with no overhangs.  <strong>B:</strong> When the `-d` option is selected, NGmerge also evaluates dovetailed alignments.</figcaption>
+  <figcaption><strong>Figure 2.</strong>  Alignments considered by NGmerge.  <strong>A:</strong> Default alignments range from those with the minimal overlap length (set by <code>-m</code>), to complete overlaps with no overhangs.  <strong>B:</strong> When the <code>-d</code> option is selected, NGmerge also evaluates dovetailed alignments.</figcaption>
 </figure>
-<br>
+<br><br>
 
 For each alignment, NGmerge computes the fraction mismatch (the number of mismatches between the R1 and R2 reads, divided by the overlap length).  Alignments with calculated values no more than the threshold set by the `-p` parameter (default 0.10) are considered valid.  If multiple valid alignments are found, the one with the lowest fraction mismatch is selected as the optimal alignment.  In rare cases where multiple alignments have identical fraction mismatches, the longest is preferred by default (unless `-s` is set).  In all of these calculations, ambiguous bases (Ns) are considered neither matches nor mismatches.
 
@@ -122,7 +123,7 @@ Further descriptions of these parameters are provided [below](#stitch-aln).
   -2  <file>       Input FASTQ file with reads from reverse direction
 ```
 
-NGmerge analyzes unaligned paired-end reads in FASTQ format.  The input files can be gzip-compressed.  Multiple sets of input files can be specified, comma-separated (or space-separated, in quotes).
+NGmerge analyzes unaligned paired-end reads in [FASTQ format](https://en.wikipedia.org/wiki/FASTQ_format).  The input files can be gzip-compressed.  Multiple sets of input files can be specified, comma-separated (or space-separated, in quotes).
 
 The input files must list the reads in the same order.  The program requires that the paired reads' headers match, at least up to the first space character.
 
@@ -137,22 +138,26 @@ Since the merged reads are defined by the 5' ends of the paired reads' alignment
                    - in 'stitch' mode (def.), the file of merged reads
 ```
 The primary output file in stitch mode is the file of merged reads, in FASTQ format.  It is possible to write to stdout with `-o -` (see also `-y`, below).
+<br>
 
 ```
   -f  <file>       FASTQ files for reads that failed stitching
                      (output as <file>_1.fastq and <file>_2.fastq)
 ```
 When specified, all the reads that failed the merging procedure will be written to the output files, as they appeared in the original inputs.
+<br>
 
 ```
   -z/-y            Option to gzip (-z) or not (-y) FASTQ output(s)
 ```
 By default, all FASTQ output files will be gzip-compressed if and only if the input files are (with multiple sets of input files, the outputs will be compressed if either of the first set of inputs is).  Specifying `-z` will guarantee that the outputs are gzip-compressed, whereas `-y` will guarantee that they are not, regardless of the inputs' formats.  Note that all gzip-compressed outputs will automatically have '.gz' appended to their filenames, if necessary.
+<br>
 
 ```
   -i               Option to produce interleaved FASTQ output(s)
 ```
 In stitch mode, this applies only to the optional output from `-f` (above).  Instead of two outputs, a single interleaved output will be produced (and no '.fastq' suffix will be appended to the filename).
+<br>
 
 ```
   -l  <file>       Log file for stitching results of each read pair
@@ -161,11 +166,11 @@ This log file lists the following for each read pair in the input file(s):
 <table>
   <tr>
     <td align="center">Read</td>
-    <td>read header, not including '@'</td>
+    <td>read header, not including <code>@</code></td>
   </tr>
   <tr>
     <td align="center">OverlapLen</td>
-    <td>total length of the read overlap, including Ns; 'NA' if reads were not merged (and remaining columns are left blank)</td>
+    <td>total length of the read overlap, including Ns; <code>NA</code> if reads were not merged (and remaining columns are left blank)</td>
   </tr>
   <tr>
     <td align="center">StitchedLen</td>
@@ -176,6 +181,7 @@ This log file lists the following for each read pair in the input file(s):
     <td>fraction of mismatched bases (count of mismatches / overlap length [not including Ns]); must be less than or equal to <code>-p</code> value (see below)</td>
   </tr>
 </table>
+<br>
 
 ```
   -c  <file>       Log file for dovetailed reads (adapter sequences)
@@ -184,19 +190,20 @@ This log file lists the following for each read pair whose optimal valid alignme
 <table>
   <tr>
     <td align="center">Read</td>
-    <td>read header, not including '@'</td>
+    <td>read header, not including <code>@</code></td>
   </tr>
   <tr>
     <td align="center">Adapter_R1</td>
-    <td>3' overhang of R1 read; '-' if no overhang</td>
+    <td>3' overhang of R1 read; <code>-</code> if no overhang</td>
   </tr>
   <tr>
     <td align="center">Adapter_R2</td>
-    <td>3' overhang of R2 read; '-' if no overhang</td>
+    <td>3' overhang of R2 read; <code>-</code> if no overhang</td>
   </tr>
 </table>
 
 The columns are labeled 'Adapter' because, if the reads were not trimmed on their 5' ends, these extra sequences should be adapters.  If the sequences that appear in the 'Adapter' columns are not consistent, they may be false positives, and one should consider decreasing `-p` or increasing `-e`.
+<br>
 
 ```
   -j  <file>       Log file for formatted alignments of merged reads
@@ -223,22 +230,26 @@ qual:    1101?B10>F1111G>HG"GEBFHHHHB>GG>>G?H="DHFFCHGHDDBD0000:....00:/;
 ```
 This is the minimum overlap length (in bp) for valid alignments of a pair of reads (see Fig. 2A).  Note that ambiguous bases (Ns) do not count toward this minimum length.
 
+<br>
 ```
   -p  <float>      Mismatches to allow in the overlapped region
                      (a fraction of the overlap length; def. 0.10)
 ```
 This parameter determines how stringent the evaluation of an alignment is.  The value must be in the interval [0, 1), with lower values equating to increased stringency.  Specifying `-p 0` means that only perfect alignments (with no mismatches) are valid; the default value of 0.10 means that a valid alignment can have at most 10% mismatches (calculated as the number of mismatches divided by the overlap length [not counting Ns]).
 
+<br>
 ```
   -d               Option to check for dovetailing (with 3' overhangs)
 ```
 When this option is selected, alignments in which a read's 3' end extends past its pair's 5' end will be evaluated, down to a minimum length (see Fig. 2B).  By default, such alignments are not even considered.  Since the merged read is defined by the original reads' 5' ends, the 3' overhangs are automatically removed.  These overhangs can be printed to a separate log file (see `-c`, above).
 
+<br>
 ```
   -e  <int>        Minimum overlap of dovetailed alignments (def. 50)
 ```
 This is the minimum overlap length (in bp) for alignments with 3' overhangs (see Fig. 2B).  This value should be set to the length of the absolute shortest DNA fragment that may have been sequenced.  Using a value that is too low may result in false positives, especially if the reads contain repetitive sequences.
 
+<br>
 ```
   -s               Option to produce shortest stitched read
 ```
@@ -252,7 +263,7 @@ By default, NGmerge uses hard-coded profiles when determining the quality scores
 ```
   -w  <file>       Use given error profile for merged qual scores
 ```
-With this option, NGmerge will use the quality score profiles in the provided file.  The file must list two matrices of comma- or tab-separated values that follow header lines `#match` and `#mismatch`.  One should follow the template of the given `qual_profile.txt` file, which mimics the hard-coded profiles of NGmerge with the quality score range of [0, 40].
+With this option, NGmerge will use the quality score profiles in the provided file.  The file must list two matrices of comma- or tab-separated values that follow header lines `#match` and `#mismatch`.  One should follow the template of the given [`qual_profile.txt`](https://github.com/jsh58/NGmerge/blob/master/qual_profile.txt) file, which mimics the hard-coded profiles of NGmerge with the quality score range of [0, 40].
 
 ```
   -g               Use 'fastq-join' method for merged qual scores
@@ -321,17 +332,20 @@ As noted previously, the `-d` option is automatically set in adapter-removal mod
   -n  <int>        Number of threads to use (def. 1)
 ```
 To reduce computational time, one can run NGmerge across multiple cores via this option.  Note that gzip compression and decompression is not parallelized, so the computational savings are not linear.
+<br>
 
 ```
   -q  <int>        FASTQ quality offset (def. 33)
   -u  <int>        Maximum input quality score (0-based; def. 40)
 ```
-These two parameters set the range of quality scores for the input FASTQ files.  The default values match the ['Sanger'](https://en.wikipedia.org/wiki/FASTQ_format#Encoding) scale, with quality scores in the range [0, 40] spanning ASCII values [33, 73].
+These two parameters set the range of quality scores for the input FASTQ files.  The default values match the [Sanger format](https://en.wikipedia.org/wiki/FASTQ_format#Encoding), with quality scores in the range [0, 40] spanning ASCII values [33, 73].
+<br>
 
 ```
   -b               Option to print mismatches only to -j log file
 ```
 Instead of printing full alignments, the log file specified by `-j` will list the details of the mismatches: the read header, position, and the base and quality score for both the R1 and R2 reads.  This is useful for calculating separate error rates for matches and mismatches.
+<br>
 
 
 Other options:
@@ -351,5 +365,6 @@ Other notes:
 ## Contact <a name="contact"></a>
 
 NGmerge
+
 Copyright &copy; 2017  John M. Gaspar (jsh58@wildcats.unh.edu)
 

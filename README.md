@@ -53,7 +53,7 @@ $ ./NGmerge  -a  -1 sample_R1.fastq.gz  -2 sample_R2.fastq.gz  -o sample_noadapt
 
 ### Software compilation <a name="compile"></a>
 
-The software can be downloaded from [GitHub](https://github.com/jsh58/NGmerge). (and you're already here! congratulations!)
+The software can be downloaded from [GitHub](https://github.com/harvardinformatics/NGmerge). (and you're already here! congratulations!)
 
 A Makefile is provided for compilation with [GCC](https://gcc.gnu.org/releases.html), and both [zlib](http://zlib.net) and [OpenMP](https://www.openmp.org/) are also required.  The program has been tested after compilation with GCC 6.3.0, zlib 1.2.8, and OpenMP 4.0.
 
@@ -269,7 +269,7 @@ By default, NGmerge uses hard-coded profiles when determining the quality scores
 ```
   -w  <file>       Use given error profile for merged qual scores
 ```
-With this option, NGmerge will use the quality score profiles in the provided file.  The file must list two matrices of comma- or tab-separated values that follow header lines `#match` and `#mismatch`.  One should follow the template of the given [`qual_profile.txt`](https://github.com/jsh58/NGmerge/blob/master/qual_profile.txt) file, which mimics the hard-coded profiles of NGmerge with the quality score range of [0, 40].
+With this option, NGmerge will use the quality score profiles in the provided file.  The file must list two matrices of comma- or tab-separated values that follow header lines `#match` and `#mismatch`.  One should follow the template of the given [`qual_profile.txt`](https://github.com/harvardinformatics/NGmerge/blob/master/qual_profile.txt) file, which mimics the hard-coded profiles of NGmerge with the quality score range of [0, 40].
 <br><br>
 
 ```

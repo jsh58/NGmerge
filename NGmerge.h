@@ -4,7 +4,7 @@
 
   Header file for NGmerge.c.
 */
-#define VERSION     "0.2"
+#define VERSION     "0.3"
 
 // constants
 #define MAX_SIZE    1024    // maximum length of input lines (incl. seq/qual)
@@ -75,7 +75,7 @@ enum omp_locks { OUT, UN, LOG, DOVE, ALN, OMP_LOCKS };
 enum errCode { ERRFILE, ERROPEN, ERRCLOSE, ERROPENW, ERRUNK,
   ERRMEM, ERRSEQ, ERRQUAL, ERRHEAD, ERRINT, ERRFLOAT, ERRPARAM,
   ERROVER, ERRMISM, ERRFASTQ, ERROFFSET, ERRUNGET, ERRGZIP,
-  ERRTHREAD, ERRNAME, ERRRANGE, DEFERR
+  ERRTHREAD, ERRNAME, ERRRANGE, ERRDEFQ, DEFERR
 };
 const char* errMsg[] = { "Need input/output files",
   ": cannot open file for reading",
@@ -92,12 +92,13 @@ const char* errMsg[] = { "Need input/output files",
   "Overlap must be greater than 0",
   "Mismatch must be in [0,1)",
   "Input file does not follow fastq format",
-  "Quality scores outside of set range",
+  ": quality score outside of set range",
   "Failure in ungetc() call",
   "Cannot pipe in gzip compressed file (use zcat instead)",
   "Number of threads must be >= 1",
   ": output filename cannot start with '-'",
-  "Quality score file missing values for score range",
+  ": file missing values for quality score range",
+  "Cannot increase max. quality score with default error profile",
   "Unknown error"
 };
 

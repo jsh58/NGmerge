@@ -8,7 +8,7 @@
   - 'adapter-removal': removing adapters (3' overhangs
      of stitched alignment) from individual reads
 
-  Version 0.2
+  Version 0.3
 */
 
 #include <stdio.h>
@@ -167,8 +167,12 @@ void checkQual(char* qual, int len, int offset,
     int maxQual) {
   for (int i = 0; i < len; i++)
     // error if qual < 0 or qual > maxQual
-    if (qual[i] < offset || qual[i] > offset + maxQual)
-      exit(error("", ERROFFSET));
+    if (qual[i] < offset || qual[i] > offset + maxQual) {
+      char* msg = (char*) memalloc(MAX_SIZE);
+      sprintf(msg, "(range [0, %d], offset %d)  '%c'",
+        maxQual, offset, qual[i]);
+      exit(error(msg, ERROFFSET));
+    }
 }
 
 /* void processSeq()
@@ -964,8 +968,12 @@ void loadQual(char* qualFile, int maxQual,
       // save values to array
       char* tok = strtok(line, CSV);
       for (int j = 0; j < maxQual + 1; j++) {
-        if (tok == NULL)
-          exit(error("", ERRRANGE));
+        if (tok == NULL) {
+          char* msg = (char*) memalloc(MAX_SIZE);
+          sprintf(msg, "(range [0, %d])  %s",
+            maxQual, qualFile);
+          exit(error(msg, ERRRANGE));
+        }
         arr[i][j] = getInt(tok);
         tok = strtok(NULL, CSV);
       }
@@ -977,8 +985,11 @@ void loadQual(char* qualFile, int maxQual,
   }
 
   // make sure all values were loaded
-  if (matIdx < maxQual + 1 || misIdx < maxQual + 1)
-    exit(error("", ERRRANGE));
+  if (matIdx < maxQual + 1 || misIdx < maxQual + 1) {
+    char* msg = (char*) memalloc(MAX_SIZE);
+    sprintf(msg, "(range [0, %d])  %s", maxQual, qualFile);
+    exit(error(msg, ERRRANGE));
+  }
 
   if ( (gz && gzclose(qual.gzf) != Z_OK) ||
       (! gz && fclose(qual.f) ) )
@@ -1002,8 +1013,8 @@ void saveQual(char* qualFile, int maxQual,
 
   if (qualFile == NULL) {
     // copy quality profile from const arrays
-    if (maxQual != MAXQUAL)
-      exit(error("", ERRRANGE));
+    if (maxQual > MAXQUAL)
+      exit(error("", ERRDEFQ));
     for (int i = 0; i < maxQual + 1; i++)
       for (int j = 0; j < maxQual + 1; j++) {
         (*match)[ i ][ j ] = match_profile[ i ][ j ];
@@ -1201,7 +1212,7 @@ void getArgs(int argc, char** argv) {
     inter = true;
   }
   if (qualFile != NULL)
-    fjoin = false;
+    fjoin = false;  // given qualFile takes precedence over fastq-join method
   if (overlap <= 0 || doveOverlap <= 0)
     exit(error("", ERROVER));
   if (mismatch < 0.0f || mismatch >= 1.0f)

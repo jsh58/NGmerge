@@ -89,9 +89,9 @@ void* memalloc(int size) {
  * Converts the given char* to a float.
  */
 float getFloat(char* in) {
-  char** endptr = NULL;
-  float ans = strtof(in, endptr);
-  if (endptr != '\0')
+  char* endptr;
+  float ans = strtof(in, &endptr);
+  if (*endptr != '\0')
     exit(error(in, ERRFLOAT));
   return ans;
 }
@@ -100,9 +100,9 @@ float getFloat(char* in) {
  * Converts the given char* to an int.
  */
 int getInt(char* in) {
-  char** endptr = NULL;
-  int ans = (int) strtol(in, endptr, 10);
-  if (endptr != '\0')
+  char* endptr;
+  int ans = (int) strtol(in, &endptr, 10);
+  if (*endptr != '\0')
     exit(error(in, ERRINT));
   return ans;
 }

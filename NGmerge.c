@@ -965,9 +965,14 @@ void loadQual(char* qualFile, int maxQual,
     } else if (arr == NULL) {
       continue;
     } else {
+      // remove trailing '\n'
+      int j;
+      for (j = 0; line[j] != '\n' && line[j] != '\0'; j++) ;
+      line[j] = '\0';
+
       // save values to array
       char* tok = strtok(line, CSV);
-      for (int j = 0; j < maxQual + 1; j++) {
+      for (j = 0; j < maxQual + 1; j++) {
         if (tok == NULL) {
           char* msg = (char*) memalloc(MAX_SIZE);
           sprintf(msg, "(range [0, %d])  %s",

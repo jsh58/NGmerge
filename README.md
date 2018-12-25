@@ -1,5 +1,7 @@
 # NGmerge: merging paired-end reads and removing sequencing adapters
 
+Gaspar JM. BMC Bioinformatics. 2018 Dec 20;19(1):536. [[PubMed](https://www.ncbi.nlm.nih.gov/pubmed/30572828)] [[BMC](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-018-2579-2)] [[PDF](https://rdcu.be/bd2AW)]
+
 ## Table of Contents
 * [Introduction](#intro)
   * [Quick start](#quick)

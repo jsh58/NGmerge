@@ -72,15 +72,15 @@ static struct option long_options[] = {
 enum omp_locks { OUT, UN, LOG, DOVE, ALN, OMP_LOCKS };
 
 // error messages
-enum errCode { ERRFILE, ERROPEN, ERRCLOSE, ERROPENW, ERRUNK,
+enum errCode { ERRFILE, ERROPEN, ERROPENW, ERRCLOSE, ERRUNK,
   ERRMEM, ERRSEQ, ERRQUAL, ERRHEAD, ERRINT, ERRFLOAT, ERRPARAM,
   ERROVER, ERRMISM, ERRFASTQ, ERROFFSET, ERRUNGET, ERRGZIP,
   ERRTHREAD, ERRNAME, ERRRANGE, ERRDEFQ, DEFERR
 };
 const char* errMsg[] = { "Need input/output files",
   ": cannot open file for reading",
-  "Cannot close file",
   ": cannot open file for writing",
+  ": cannot close file",
   ": unknown nucleotide",
   "Cannot allocate memory",
   "Cannot load sequence",

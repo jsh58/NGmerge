@@ -78,7 +78,7 @@ int error(char* msg, enum errCode err) {
 /* void* memalloc()
  * Allocates a heap block.
  */
-void* memalloc(int size) {
+void* memalloc(size_t size) {
   void* ans = malloc(size);
   if (ans == NULL)
     exit(error("", ERRMEM));
@@ -930,7 +930,7 @@ bool openRead(char* inFile, File* in) {
   // open file
   if (gzip) {
     if (fclose(dummy))
-      exit(error("", ERRCLOSE));
+      exit(error("<dummy>", ERRCLOSE));
     in->gzf = gzopen(inFile, "r");
     if (in->gzf == NULL)
       exit(error(inFile, ERROPEN));
@@ -998,7 +998,7 @@ void loadQual(char* qualFile, int maxQual,
 
   if ( (gz && gzclose(qual.gzf) != Z_OK) ||
       (! gz && fclose(qual.f) ) )
-    exit(error("", ERRCLOSE));
+    exit(error(qualFile, ERRCLOSE));
   free(line);
 }
 
@@ -1109,10 +1109,12 @@ void runProgram(char* outFile, char* inFile1,
     }
 
     // close input files
-    if ( (gz1 && gzclose(in1.gzf) != Z_OK) || (! gz1 && fclose(in1.f))
-        || (! inter && ( (gz2 && gzclose(in2.gzf) != Z_OK)
-        || (! gz2 && fclose(in2.f)) ) ) )
-      exit(error("", ERRCLOSE));
+    if ( (gz1 && gzclose(in1.gzf) != Z_OK)
+        || (! gz1 && fclose(in1.f)) )
+      exit(error(file1, ERRCLOSE));
+    if ( ! inter && ( (gz2 && gzclose(in2.gzf) != Z_OK)
+        || (! gz2 && fclose(in2.f)) ) )
+      exit(error(file2, ERRCLOSE));
 
     file1 = strtok_r(NULL, COM, &end1);
     file2 = file1;
@@ -1141,18 +1143,27 @@ void runProgram(char* outFile, char* inFile1,
   }
 
   // close files
-  if ( ( gzOut && ( gzclose(out.gzf) != Z_OK ||
-      (adaptOpt && ! interOpt && gzclose(out2.gzf) != Z_OK) ||
-      (unFile != NULL && (gzclose(un1.gzf) != Z_OK ||
-      (! interOpt && gzclose(un2.gzf) != Z_OK)) ) ) ) ||
-      ( ! gzOut && ( fclose(out.f) ||
-      (adaptOpt && ! interOpt && fclose(out2.f)) ||
-      (unFile != NULL && (fclose(un1.f) ||
-      (! interOpt && fclose(un2.f)) ) ) ) ) ||
-      (logFile != NULL && fclose(log.f)) ||
-      (dovetail && doveFile != NULL && fclose(dove.f)) ||
-      (alnFile != NULL && fclose(aln.f)) )
-    exit(error("", ERRCLOSE));
+  if (gzOut) {
+    if ( gzclose(out.gzf) != Z_OK ||
+        (adaptOpt && ! interOpt && gzclose(out2.gzf) != Z_OK) )
+      exit(error(outFile, ERRCLOSE));
+    if ( unFile != NULL && (gzclose(un1.gzf) != Z_OK ||
+        (! interOpt && gzclose(un2.gzf) != Z_OK)) )
+      exit(error(unFile, ERRCLOSE));
+  } else {
+    if ( fclose(out.f) ||
+        (adaptOpt && ! interOpt && fclose(out2.f)) )
+      exit(error(outFile, ERRCLOSE));
+    if ( unFile != NULL && (fclose(un1.f) ||
+        (! interOpt && fclose(un2.f)) ) )
+      exit(error(unFile, ERRCLOSE));
+  }
+  if (logFile != NULL && fclose(log.f))
+    exit(error(logFile, ERRCLOSE));
+  if (dovetail && doveFile != NULL && fclose(dove.f))
+    exit(error(doveFile, ERRCLOSE));
+  if (alnFile != NULL && fclose(aln.f))
+    exit(error(alnFile, ERRCLOSE));
 }
 
 /* void getArgs()

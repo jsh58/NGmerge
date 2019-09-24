@@ -152,10 +152,14 @@ void checkHeaders(char* head1, char* head2, char* header) {
       exit(error(head1, ERRHEAD));
     } else if (head1[j] == ' ')
       ok = true;  // headers match
+      else if (head1[j] == '/')
+      ok = true; // headers match, this is added for HMP data
     header[j] = head1[j];
   }
   if (header[j - 1] == ' ')
     header[j - 1] = '\0'; // removing trailing space
+  else if (header[j - 1] == '/')
+    header[j - 1] = '\0'; // removing trailing forward slash, added for HMP data
   else
     header[j] = '\0';
 }

@@ -94,6 +94,7 @@ I/O options:
   -g               Use 'fastq-join' method for merged qual scores
   -q  <int>        FASTQ quality offset (def. 33)
   -u  <int>        Maximum input quality score (0-based; def. 40)
+  -t  <char>       Delimiter for headers of paired reads (def. ' ')
   -n  <int>        Number of threads to use (def. 1)
   -v               Option to print status updates/counts to stderr
 ```
@@ -129,7 +130,7 @@ Further descriptions of these parameters are provided [below](#stitch-aln).
 
 NGmerge analyzes unaligned paired-end reads in [FASTQ format](https://en.wikipedia.org/wiki/FASTQ_format).  The input files can be gzip-compressed.  Multiple sets of input files can be specified, comma-separated (or space-separated, in quotes).
 
-The input files must list the reads in the same order.  The program requires that the paired reads' headers match, at least up to the first space character.
+The input files must list the reads in the same order.  The program requires that the paired reads' headers match, at least up to the first space character (or whatever alternative character is specified by `-t`).
 
 An input file of interleaved reads can be analyzed by not specifying a `-2` file.  Also, it is possible to read from `stdin` using `-`, e.g. `-1 -`.
 
@@ -353,6 +354,12 @@ To reduce computational time, one can run NGmerge across multiple cores via this
   -u  <int>        Maximum input quality score (0-based; def. 40)
 ```
 These two parameters set the range of quality scores for the input FASTQ files.  The default values match the [Sanger format](https://en.wikipedia.org/wiki/FASTQ_format#Encoding), with quality scores in the range [0, 40] spanning ASCII values [33, 73].
+<br><br>
+
+```
+  -t  <char>       Delimiter for headers of paired reads (def. ' ')
+```
+The headers of a pair of reads must match, at least up to the first space character, by default.  An alternative delimiter (such as `/` or `$'\t'`) can be specified with this option.  If multiple characters are provided, only the first will be used as the delimiter.
 <br><br>
 
 ```

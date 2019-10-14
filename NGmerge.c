@@ -62,6 +62,7 @@ void usage(void) {
   fprintf(stderr, "  -%c               Use 'fastq-join' method for merged qual scores\n", FJOINOPT);
   fprintf(stderr, "  -%c  <int>        FASTQ quality offset (def. %d)\n", QUALITY, OFFSET);
   fprintf(stderr, "  -%c  <int>        Maximum input quality score (0-based; def. %d)\n", SETQUAL, MAXQUAL);
+  fprintf(stderr, "  -%c  <char>       Delimiter for headers of paired reads (def. ' ')\n", DELIM);
   fprintf(stderr, "  -%c  <int>        Number of threads to use (def. %d)\n", THREADS, DEFTHR);
   fprintf(stderr, "  -%c               Option to print status updates/counts to stderr\n", VERBOSE);
   exit(-1);
@@ -136,10 +137,11 @@ char* getLine(char* line, int size, File in, bool gz) {
 }
 
 /* void checkHeaders()
- * Ensure headers match (up to first space character);
+ * Ensure headers match (up to first `delim` character);
  *   create consensus header.
  */
-void checkHeaders(char* head1, char* head2, char* header) {
+void checkHeaders(char* head1, char* head2, char* header,
+    char delim) {
   bool ok = false;  // match boolean
   int j;
   for (j = 0; head1[j] != '\n' && head1[j] != '\0'; j++) {
@@ -147,15 +149,15 @@ void checkHeaders(char* head1, char* head2, char* header) {
       if (ok)
         break;
       for ( ; head1[j] != '\n' && head1[j] != '\0'
-        && head1[j] != ' '; j++) ;
+        && head1[j] != delim; j++) ;
       head1[j] = '\0';  // trim head1 for err msg
       exit(error(head1, ERRHEAD));
-    } else if (head1[j] == ' ')
+    } else if (head1[j] == delim)
       ok = true;  // headers match
     header[j] = head1[j];
   }
-  if (header[j - 1] == ' ')
-    header[j - 1] = '\0'; // removing trailing space
+  if (header[j - 1] == delim)
+    header[j - 1] = '\0'; // removing trailing delim
   else
     header[j] = '\0';
 }
@@ -217,9 +219,10 @@ void processSeq(char** read, int* len, bool i,
  * Load a pair of reads. Check formatting, determine
  *   consensus header. Return false on EOF.
  */
-bool loadReads(File in1, File in2, char** read1, char** read2,
-    char* header, int* len1, int* len2, int offset,
-    int maxQual, bool gz1, bool gz2) {
+bool loadReads(File in1, File in2, char** read1,
+    char** read2, char* header, int* len1, int* len2,
+    int offset, int maxQual, char delim, bool gz1,
+    bool gz2) {
 
   // load both reads from input files (LOCK)
   bool flag = false;  // boolean for EOF
@@ -244,7 +247,7 @@ bool loadReads(File in1, File in2, char** read1, char** read2,
           } else {
             int k = 0;
             for ( ; read1[HEAD][k] != '\n' && read1[HEAD][k] != '\0'
-              && read1[HEAD][k] != ' '; k++) ;
+              && read1[HEAD][k] != delim; k++) ;
             read1[HEAD][k] = '\0';  // trim header for err msg
             exit(error(read1[HEAD], ERRHEAD));
           }
@@ -271,7 +274,7 @@ bool loadReads(File in1, File in2, char** read1, char** read2,
   processSeq(read2, len2, true, QUAL, offset, maxQual);
 
   // check headers
-  checkHeaders(read1[HEAD], read2[HEAD], header);
+  checkHeaders(read1[HEAD], read2[HEAD], header, delim);
 
   return true;
 }
@@ -705,7 +708,7 @@ int readFile(File in1, File in2, File out, File out2,
     bool logOpt, int overlap, bool dovetail, int doveOverlap,
     File dove, bool doveOpt, File aln, int alnOpt,
     bool adaptOpt, float mismatch, bool maxLen,
-    int* stitch, int offset, int maxQual,
+    int* stitch, int offset, int maxQual, char delim,
     bool gz1, bool gz2, bool gzOut, bool fjoin,
     char** match, char** mism, int threads) {
 
@@ -733,7 +736,7 @@ int readFile(File in1, File in2, File out, File out2,
     // process reads
     int len1 = 0, len2 = 0; // lengths of reads
     while (loadReads(in1, in2, read1, read2, header,
-        &len1, &len2, offset, maxQual, gz1, gz2)) {
+        &len1, &len2, offset, maxQual, delim, gz1, gz2)) {
 
       // find optimal overlap
       float best = 1.0f;
@@ -1042,7 +1045,7 @@ void runProgram(char* outFile, char* inFile1,
     int alnOpt, bool adaptOpt, int gzOut, bool fjoin,
     bool interOpt, float mismatch, bool maxLen,
     int offset, int maxQual, char* qualFile,
-    bool verbose, int threads) {
+    char delim, bool verbose, int threads) {
 
   // get first set of input file names
   char* end1, *end2;
@@ -1094,8 +1097,8 @@ void runProgram(char* outFile, char* inFile1,
       overlap, dovetail, doveOverlap, dove,
       dovetail && doveFile != NULL, aln, alnOpt,
       adaptOpt, mismatch, maxLen, &stitch,
-      offset, maxQual, gz1, gz2, gzOut, fjoin,
-      match, mism, threads);
+      offset, maxQual, delim, gz1, gz2, gzOut,
+      fjoin, match, mism, threads);
     tCount += count;
     tStitch += stitch;
 
@@ -1175,6 +1178,7 @@ void getArgs(int argc, char** argv) {
   char* outFile = NULL, *inFile1 = NULL, *inFile2 = NULL,
     *unFile = NULL, *logFile = NULL, *doveFile = NULL,
     *alnFile = NULL, *qualFile = NULL;
+  char delim = ' ';
   int overlap = DEFOVER, doveOverlap = DEFDOVE, gzOut = 0,
     offset = OFFSET, maxQual = MAXQUAL, threads = DEFTHR;
   float mismatch = DEFMISM;
@@ -1210,6 +1214,7 @@ void getArgs(int argc, char** argv) {
       case QUALITY: offset = getInt(optarg); break;
       case SETQUAL: maxQual = getInt(optarg); break;
       case QUALFILE: qualFile = optarg; break;
+      case DELIM: delim = optarg[0]; break;
       case THREADS: threads = getInt(optarg); break;
       default: exit(-1);
     }
@@ -1247,8 +1252,8 @@ void getArgs(int argc, char** argv) {
   runProgram(outFile, inFile1, inFile2, inter, unFile,
     logFile, overlap, dovetail, doveFile, doveOverlap,
     alnFile, alnOpt, adaptOpt, gzOut, fjoin, interOpt,
-    mismatch, maxLen, offset, maxQual, qualFile, verbose,
-    threads);
+    mismatch, maxLen, offset, maxQual, qualFile, delim,
+    verbose, threads);
 }
 
 /* int main()

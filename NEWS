@@ -2,6 +2,10 @@ NGmerge
 
 Copyright (C) 2017 John M. Gaspar (jsh58@wildcats.unh.edu)
 
+Version 0.3 - Mar 18, 2020
+  * `-t <char>` option for an alternative read header delimiter
+  * Various debugs, documentation edits
+
 Version 0.2 - Nov 14, 2017
   * Fix data race in alignments output
   * Combine merged sequence functions for default and fastq-join modes

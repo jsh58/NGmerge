@@ -4,12 +4,12 @@
 
   Header file for NGmerge.c.
 */
-#define VERSION     "0.3"
+#define VERSION     "0.4"
 
 // constants
 #define MAX_SIZE    1024    // maximum length of input lines (incl. seq/qual)
 #define NOTMATCH    1.5f    // stitch failure
-#define COM         ", "    // separator for input file names
+#define COM         ","     // separator for input file names
 #define CSV         ",\t"   // separator for quality score profile
 #define NA          "NA"    // n/a (for output log file)
 

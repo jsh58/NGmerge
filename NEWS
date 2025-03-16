@@ -2,6 +2,10 @@ NGmerge
 
 Copyright (C) 2017 John M. Gaspar (jsh58@wildcats.unh.edu)
 
+Version 0.4 - Mar 16, 2025
+  * Multiple input files must be comma-separated (not space-separated
+      in quotes, as was previously allowed)
+
 Version 0.3 - Mar 18, 2020
   * `-t <char>` option for an alternative read header delimiter
   * Various debugs, documentation edits

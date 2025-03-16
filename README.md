@@ -128,7 +128,7 @@ Further descriptions of these parameters are provided [below](#stitch-aln).
   -2  <file>       Input FASTQ file with reads from reverse direction
 ```
 
-NGmerge analyzes unaligned paired-end reads in [FASTQ format](https://en.wikipedia.org/wiki/FASTQ_format).  The input files can be gzip-compressed.  Multiple sets of input files can be specified, comma-separated (or space-separated, in quotes).
+NGmerge analyzes unaligned paired-end reads in [FASTQ format](https://en.wikipedia.org/wiki/FASTQ_format).  The input files can be gzip-compressed.  Multiple sets of input files can be specified, comma-separated.
 
 The input files must list the reads in the same order.  The program requires that the paired reads' headers match, at least up to the first space character (or whatever alternative character is specified by `-t`).
 

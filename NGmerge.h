@@ -19,6 +19,7 @@
 #define DEFMISM     0.1f    // mismatch fraction
 #define OFFSET      33      // fastq quality offset (Sanger = 33)
 #define MAXQUAL     40      // maximum quality score (0-based)
+#define DEFMIN      1       // min. read length
 #define DEFTHR      1       // number of threads
 
 // fastq parts
@@ -29,7 +30,7 @@ enum fastq { HEAD, SEQ, PLUS, QUAL, FASTQ };  // lines of a fastq read
                             //   revComp(seq) and rev(qual)
 
 // command-line options
-#define OPTIONS     "h1:2:o:f:l:m:p:de:c:saj:bzyigq:u:w:t:n:vV"
+#define OPTIONS     "h1:2:o:f:l:m:p:de:c:saj:bzyigq:u:w:t:x:n:vV"
 #define HELP        'h'
 #define FIRST       '1'
 #define SECOND      '2'
@@ -53,6 +54,7 @@ enum fastq { HEAD, SEQ, PLUS, QUAL, FASTQ };  // lines of a fastq read
 #define SETQUAL     'u'
 #define QUALFILE    'w'
 #define DELIM       't'
+#define MINLEN      'x'
 #define THREADS     'n'
 #define VERBOSE     'v'
 #define VERSOPT     'V'
@@ -85,7 +87,7 @@ const char* errMsg[] = { "Need input/output files",
   ": unknown nucleotide",
   "Cannot allocate memory",
   "Cannot load sequence",
-  "Sequence/quality scores do not match",
+  ": sequence/quality scores do not match",
   ": not matched in input files",
   ": cannot convert to int",
   ": cannot convert to float",

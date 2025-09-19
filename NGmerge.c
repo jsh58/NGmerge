@@ -63,6 +63,7 @@ void usage(void) {
   fprintf(stderr, "  -%c  <int>        FASTQ quality offset (def. %d)\n", QUALITY, OFFSET);
   fprintf(stderr, "  -%c  <int>        Maximum input quality score (0-based; def. %d)\n", SETQUAL, MAXQUAL);
   fprintf(stderr, "  -%c  <char>       Delimiter for headers of paired reads (def. ' ')\n", DELIM);
+  fprintf(stderr, "  -%c  <int>        Minimum length of output reads (def. %d)\n", MINLEN, DEFMIN);
   fprintf(stderr, "  -%c  <int>        Number of threads to use (def. %d)\n", THREADS, DEFTHR);
   fprintf(stderr, "  -%c               Option to print status updates/counts to stderr\n", VERBOSE);
   exit(-1);
@@ -191,7 +192,7 @@ void processSeq(char** read, int* len, bool i,
   if (j == SEQ)
     *len = k;  // save read length
   else if (k != *len)
-    exit(error("", ERRQUAL)); // seq/qual length mismatch
+    exit(error(read[0] + 1, ERRQUAL)); // seq/qual length mismatch
 
   // for 2nd read (i == true), save revComp(seq) or rev(qual)
   if (i) {
@@ -708,9 +709,9 @@ int readFile(File in1, File in2, File out, File out2,
     bool logOpt, int overlap, bool dovetail, int doveOverlap,
     File dove, bool doveOpt, File aln, int alnOpt,
     bool adaptOpt, float mismatch, bool maxLen,
-    int* stitch, int offset, int maxQual, char delim,
-    bool gz1, bool gz2, bool gzOut, bool fjoin,
-    char** match, char** mism, int threads) {
+    int* stitch, int* mLen, int offset, int maxQual,
+    char delim, int minLen, bool gz1, bool gz2, bool gzOut,
+    bool fjoin, char** match, char** mism, int threads) {
 
   // initialize omp locks -- out, un, log, dove, aln
   omp_lock_t lock[OMP_LOCKS];
@@ -718,8 +719,8 @@ int readFile(File in1, File in2, File out, File out2,
     omp_init_lock(&lock[i]);
 
   // process files in parallel
-  int count = 0, stitchRed = 0;
-  #pragma omp parallel num_threads(threads) reduction(+: count, stitchRed)
+  int count = 0, stitchRed = 0, lenRed = 0;
+  #pragma omp parallel num_threads(threads) reduction(+: count, stitchRed, lenRed)
   {
 
     // allocate memory for both reads
@@ -744,15 +745,20 @@ int readFile(File in1, File in2, File out, File out2,
         read1[QUAL], read2[QUAL + EXTRA], len1, len2, overlap,
         dovetail, doveOverlap, mismatch, maxLen, &best);
 
+fprintf(stderr, "len1=%d, len2=%d, pos=%d\n", len1, len2, pos);
       // print result
       if (pos == len1 - overlap + 1) {
         // stitch failure
-        if (adaptOpt)
-          printFail(out, out2, 1, log, 0, header, read1,
-            read2, gzOut, lock + OUT, lock + LOG);
-        else
-          printFail(un1, un2, unOpt, log, logOpt, header,
-            read1, read2, gzOut, lock + UN, lock + LOG);
+        if (len1 < minLen || len2 < minLen)
+          lenRed++;
+        else {
+          if (adaptOpt)
+            printFail(out, out2, 1, log, 0, header, read1,
+              read2, gzOut, lock + OUT, lock + LOG);
+          else
+            printFail(un1, un2, unOpt, log, logOpt, header,
+              read1, read2, gzOut, lock + UN, lock + LOG);
+        }
       } else {
         // stitch success
         if (adaptOpt) {
@@ -787,6 +793,7 @@ int readFile(File in1, File in2, File out, File out2,
     omp_destroy_lock(&lock[i]);
 
   *stitch = stitchRed;
+  *mLen = lenRed;
   return count;
 }
 
@@ -1045,10 +1052,10 @@ void runProgram(char* outFile, char* inFile1,
     int alnOpt, bool adaptOpt, int gzOut, bool fjoin,
     bool interOpt, float mismatch, bool maxLen,
     int offset, int maxQual, char* qualFile,
-    char delim, bool verbose, int threads) {
+    char delim, int minLen, bool verbose, int threads) {
 
   // get first set of input file names
-  char* end1, *end2;
+  char* end1, *end2 = NULL;
   char* file1 = strtok_r(inFile1, COM, &end1);
   char* file2 = file1;
   if (! inter)
@@ -1058,7 +1065,7 @@ void runProgram(char* outFile, char* inFile1,
   File out, out2, un1, un2, log, dove, aln; // output files
   char** match = NULL, **mism = NULL;  // quality score profiles
   int i = 0;  // count of files processed
-  int tCount = 0, tStitch = 0;  // counting variables
+  int tCount = 0, tStitch = 0, tLen = 0;  // counting variables
   while (file1 && file2) {
 
     // open input files
@@ -1089,18 +1096,19 @@ void runProgram(char* outFile, char* inFile1,
     if (verbose)
       fprintf(stderr, "Processing files: %s,%s\n", file1,
         inter ? "(interleaved)" : file2);
-    int stitch = 0;  // counting variable
+    int stitch = 0, mLen = 0;  // counting variables
     int count = readFile(in1, inter ? in1 : in2,
       out, interOpt ? out : out2,
       un1, interOpt ? un1 : un2, unFile != NULL,
       log, logFile != NULL,
       overlap, dovetail, doveOverlap, dove,
       dovetail && doveFile != NULL, aln, alnOpt,
-      adaptOpt, mismatch, maxLen, &stitch,
-      offset, maxQual, delim, gz1, gz2, gzOut,
+      adaptOpt, mismatch, maxLen, &stitch, &mLen,
+      offset, maxQual, delim, minLen, gz1, gz2, gzOut,
       fjoin, match, mism, threads);
     tCount += count;
     tStitch += stitch;
+    tLen += mLen;
 
     // log counts
     if (verbose) {
@@ -1109,6 +1117,8 @@ void runProgram(char* outFile, char* inFile1,
         fprintf(stderr, "  Adapters removed: %d\n", stitch);
       else
         fprintf(stderr, "  Successfully stitched: %d\n", stitch);
+      if (mLen)
+        fprintf(stderr, "  Removed for length<%dbp: %d\n", minLen, mLen);
     }
 
     // close input files
@@ -1133,6 +1143,8 @@ void runProgram(char* outFile, char* inFile1,
       fprintf(stderr, "  Adapters removed: %d\n", tStitch);
     else
       fprintf(stderr, "  Successfully stitched: %d\n", tStitch);
+    if (tLen)
+      fprintf(stderr, "  Removed for length<%dbp: %d\n", minLen, tLen);
   }
 
   // free memory for qual score profiles
@@ -1180,7 +1192,8 @@ void getArgs(int argc, char** argv) {
     *alnFile = NULL, *qualFile = NULL;
   char delim = ' ';
   int overlap = DEFOVER, doveOverlap = DEFDOVE, gzOut = 0,
-    offset = OFFSET, maxQual = MAXQUAL, threads = DEFTHR;
+    offset = OFFSET, maxQual = MAXQUAL, minLen = DEFMIN,
+    threads = DEFTHR;
   float mismatch = DEFMISM;
   bool dovetail = false, adaptOpt = false, maxLen = true,
     diffOpt = false, interOpt = false, fjoin = false,
@@ -1215,6 +1228,7 @@ void getArgs(int argc, char** argv) {
       case SETQUAL: maxQual = getInt(optarg); break;
       case QUALFILE: qualFile = optarg; break;
       case DELIM: delim = optarg[0]; break;
+      case MINLEN: minLen = getInt(optarg); break;
       case THREADS: threads = getInt(optarg); break;
       default: exit(-1);
     }
@@ -1253,7 +1267,7 @@ void getArgs(int argc, char** argv) {
     logFile, overlap, dovetail, doveFile, doveOverlap,
     alnFile, alnOpt, adaptOpt, gzOut, fjoin, interOpt,
     mismatch, maxLen, offset, maxQual, qualFile, delim,
-    verbose, threads);
+    minLen, verbose, threads);
 }
 
 /* int main()

@@ -755,15 +755,19 @@ fprintf(stderr, "len1=%d, len2=%d, pos=%d\n", len1, len2, pos);
         }
       } else {
         // stitch success
-        if (adaptOpt) {
-          stitchRed += printResAdapt(out, out2, dove, doveOpt,
-            header, read1, read2, len1, len2, pos, best,
-            gzOut, lock);
-        } else {
-          printRes(out, log, logOpt, dove, doveOpt, aln, alnOpt,
-            header, read1, read2, len1, len2, pos, best, offset,
-            gzOut, fjoin, match, mism, lock);
-          stitchRed++;
+        if (len2 + pos < minLen)
+          lenRed++;
+        else {
+          if (adaptOpt) {
+            stitchRed += printResAdapt(out, out2, dove, doveOpt,
+              header, read1, read2, len1, len2, pos, best,
+              gzOut, lock);
+          } else {
+            printRes(out, log, logOpt, dove, doveOpt, aln, alnOpt,
+              header, read1, read2, len1, len2, pos, best, offset,
+              gzOut, fjoin, match, mism, lock);
+            stitchRed++;
+          }
         }
       }
 

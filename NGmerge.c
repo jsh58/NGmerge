@@ -143,24 +143,18 @@ char* getLine(char* line, int size, File in, bool gz) {
  */
 void checkHeaders(char* head1, char* head2, char* header,
     char delim) {
-  bool ok = false;  // match boolean
   int j;
   for (j = 0; head1[j] != '\n' && head1[j] != '\0'; j++) {
     if (head1[j] != head2[j]) {
-      if (ok)
-        break;
       for ( ; head1[j] != '\n' && head1[j] != '\0'
         && head1[j] != delim; j++) ;
       head1[j] = '\0';  // trim head1 for err msg
       exit(error(head1, ERRHEAD));
     } else if (head1[j] == delim)
-      ok = true;  // headers match
+      break;  // headers match
     header[j] = head1[j];
   }
-  if (header[j - 1] == delim)
-    header[j - 1] = '\0'; // removing trailing delim
-  else
-    header[j] = '\0';
+  header[j] = '\0';
 }
 
 /* void checkQual()

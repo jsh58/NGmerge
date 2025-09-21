@@ -76,9 +76,9 @@ enum omp_locks { OUT, UN, LOG, DOVE, ALN, OMP_LOCKS };
 
 // error messages
 enum errCode { ERRFILE, ERROPEN, ERROPENW, ERRCLOSE, ERRUNK,
-  ERRMEM, ERRSEQ, ERRQUAL, ERRHEAD, ERRINT, ERRFLOAT, ERRPARAM,
-  ERROVER, ERRMISM, ERRFASTQ, ERROFFSET, ERRUNGET, ERRGZIP,
-  ERRTHREAD, ERRNAME, ERRRANGE, ERRDEFQ, DEFERR
+  ERRMEM, ERRSEQ, ERRQUAL, ERRHEAD, ERRHEAD2, ERRINT, ERRFLOAT,
+  ERRPARAM, ERROVER, ERRMISM, ERRFASTQ, ERROFFSET, ERRUNGET,
+  ERRGZIP, ERRTHREAD, ERRNAME, ERRRANGE, ERRDEFQ, DEFERR
 };
 const char* errMsg[] = { "Need input/output files",
   ": cannot open file for reading",
@@ -86,15 +86,16 @@ const char* errMsg[] = { "Need input/output files",
   ": cannot close file",
   ": unknown nucleotide",
   "Cannot allocate memory",
-  "Cannot load sequence",
+  ": cannot load fastq record",
   ": sequence/quality scores do not match",
   ": not matched in input files",
+  ": not matched in input files (file truncated)",
   ": cannot convert to int",
   ": cannot convert to float",
   ": unknown command-line argument",
   "Overlap must be greater than 0",
   "Mismatch must be in [0,1)",
-  "Input file does not follow fastq format",
+  ": does not follow fastq format",
   ": quality score outside of set range",
   "Failure in ungetc() call",
   "Cannot pipe in gzip compressed file (use zcat instead)",

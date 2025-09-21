@@ -87,6 +87,23 @@ void* memalloc(size_t size) {
   return ans;
 }
 
+/* void readError()
+ * Prepares an error message from a read header.
+ */
+void readError(char* msg1, char* msg2, enum errCode err) {
+  char* msg = (char*) memalloc(MAX_SIZE);
+  int j = 0;
+  for ( ; msg1[j] != '\n' && msg1[j] != '\0'; j++)
+    msg[j] = msg1[j];
+  if (strlen(msg2)) {
+    msg[j++] = ',';
+    for (int k = 0; msg2[k] != '\n' && msg2[k] != '\0'; k++)
+      msg[j++] = msg2[k];
+  }
+  msg[j] = '\0';  // trim header for err msg
+  exit(error(msg, err));
+}
+
 /* float getFloat(char*)
  * Converts the given char* to a float.
  */
@@ -144,13 +161,10 @@ char* getLine(char* line, int size, File in, bool gz) {
 void checkHeaders(char* head1, char* head2, char* header,
     char delim) {
   int j;
-  for (j = 0; head1[j] != '\n' && head1[j] != '\0'; j++) {
-    if (head1[j] != head2[j]) {
-      for ( ; head1[j] != '\n' && head1[j] != '\0'
-        && head1[j] != delim; j++) ;
-      head1[j] = '\0';  // trim head1 for err msg
-      exit(error(head1, ERRHEAD));
-    } else if (head1[j] == delim)
+  for (j = 0; head1[j] != '\0'; j++) {
+    if (head1[j] != head2[j])
+      readError(head1, head2, ERRHEAD);
+    else if (head1[j] == delim || head1[j] == '\n')
       break;  // headers match
     header[j] = head1[j];
   }
@@ -186,7 +200,7 @@ void processSeq(char** read, int* len, bool i,
   if (j == SEQ)
     *len = k;  // save read length
   else if (k != *len)
-    exit(error(read[0] + 1, ERRQUAL)); // seq/qual length mismatch
+    readError(read[HEAD], "", ERRQUAL); // seq/qual length mismatch
 
   // for 2nd read (i == true), save revComp(seq) or rev(qual)
   if (i) {
@@ -220,7 +234,7 @@ bool loadReads(File in1, File in2, char** read1,
     bool gz2) {
 
   // load both reads from input files (LOCK)
-  bool flag = false;  // boolean for EOF
+  int flag = 0;  // counter for EOF
   #pragma omp critical
   for (int i = 0; i < 2; i++) {
     File in = in1;
@@ -235,32 +249,28 @@ bool loadReads(File in1, File in2, char** read1,
     // load read (4 lines)
     for (int j = 0; j < FASTQ; j++)
       if (getLine(read[j], MAX_SIZE, in, gz) == NULL) {
-        if (j == 0) {
-          if (i == 0) {
-            flag = true;  // EOF
-            break;
-          } else {
-            int k = 0;
-            for ( ; read1[HEAD][k] != '\n' && read1[HEAD][k] != '\0'
-              && read1[HEAD][k] != delim; k++) ;
-            read1[HEAD][k] = '\0';  // trim header for err msg
-            exit(error(read1[HEAD], ERRHEAD));
-          }
+        if (j == HEAD) {
+          flag++;
+          read[HEAD][0] = '\0';
+          break;
         } else
-          exit(error("", ERRSEQ));
+          readError(read[HEAD], "", ERRSEQ);
       }
-    if (flag)
-      break;
 
   }  // (UNLOCK)
 
-  if (flag)
+  if (flag == 2)
     return false;  // EOF
+  else if (flag == 1)
+    readError(read1[HEAD][0] == '\0' ? "(null)" : read1[HEAD],
+      read2[HEAD][0] == '\0' ? "(null)" : read2[HEAD],
+      ERRHEAD2);
 
   // check fastq formatting
-  if (read1[HEAD][0] != BEGIN || read1[PLUS][0] != PLUSCHAR
-      || read2[HEAD][0] != BEGIN || read2[PLUS][0] != PLUSCHAR)
-    exit(error("", ERRFASTQ));
+  if (read1[HEAD][0] != BEGIN || read1[PLUS][0] != PLUSCHAR)
+    readError(read1[HEAD], "", ERRFASTQ);
+  if (read2[HEAD][0] != BEGIN || read2[PLUS][0] != PLUSCHAR)
+    readError(read2[HEAD], "", ERRFASTQ);
 
   // process sequence/quality lines
   processSeq(read1, len1, false, SEQ, offset, maxQual);

@@ -1125,7 +1125,7 @@ void runProgram(char* outFile, char* inFile1,
       else
         fprintf(stderr, "  Successfully stitched: %d\n", stitch);
       if (mLen)
-        fprintf(stderr, "  Removed for length<%dbp: %d\n", minLen, mLen);
+        fprintf(stderr, "  Discarded for length<%dbp: %d\n", minLen, mLen);
     }
 
     // close input files

@@ -95,6 +95,7 @@ I/O options:
   -q  <int>        FASTQ quality offset (def. 33)
   -u  <int>        Maximum input quality score (0-based; def. 40)
   -t  <char>       Delimiter for headers of paired reads (def. ' ')
+  -x  <int>        Minimum length of output reads (def. 1)
   -n  <int>        Number of threads to use (def. 1)
   -v               Option to print status updates/counts to stderr
 ```
@@ -360,6 +361,12 @@ These two parameters set the range of quality scores for the input FASTQ files. 
   -t  <char>       Delimiter for headers of paired reads (def. ' ')
 ```
 The headers of a pair of reads must match, at least up to the first space character, by default.  An alternative delimiter (such as `/` or `$'\t'`) can be specified with this option.  If multiple characters are provided, only the first will be used as the delimiter.
+<br><br>
+
+```
+  -x  <int>        Minimum length of output reads (def. 1)
+```
+In either analysis mode, reads that do not meet this minimum length will not be printed to output files. The default value of 1 means that no zero-length reads will be printed. In stitch mode, reads failing to meet the minimum will not be logged in the `-l <file>`.
 <br><br>
 
 ```

@@ -129,7 +129,7 @@ int getInt(char* in) {
 /* char rc(char)
  * Returns the complement of the given base.
  */
-char rc(char in) {
+char rc(char* header, char in) {
   char out;
   if (in == 'A') out = 'T';
   else if (in == 'T') out = 'A';
@@ -137,9 +137,9 @@ char rc(char in) {
   else if (in == 'G') out = 'C';
   else if (in == 'N') out = 'N';
   else {
-    char msg[4] = "' '";
-    msg[1] = in;
-    exit(error(msg, ERRUNK));
+    char msg[5] = " ' '";
+    msg[2] = in;
+    readError(header, msg, ERRUNK);
   }
   return out;
 }
@@ -209,7 +209,7 @@ void processSeq(char** read, int* len, bool i,
     if (j == SEQ) {
       dest++;  // increment b/c of fastq 'plus' line
       for (k--; k > -1; k--)
-        read[dest][m++] = rc(read[j][k]);
+        read[dest][m++] = rc(read[HEAD], read[j][k]);
     } else
       for (k--; k > -1; k--)
         read[dest][m++] = read[j][k];
@@ -217,11 +217,11 @@ void processSeq(char** read, int* len, bool i,
   } else if (j == SEQ)
     // check 1st read's sequence for non-ACGTN chars
     for (int m = 0; m < k; m++)
-      rc(read[j][m]);
+      rc(read[HEAD], read[j][m]);
 
   // check quality scores
   if (j == QUAL)
-    checkQual(read[HEAD], read[j], k, offset, maxQual);
+    checkQual(read[HEAD], read[j], *len, offset, maxQual);
 }
 
 /* bool loadReads()

@@ -174,15 +174,15 @@ void checkHeaders(char* head1, char* head2, char* header,
 /* void checkQual()
  * Check given quality string for offset errors.
  */
-void checkQual(char* qual, int len, int offset,
-    int maxQual) {
+void checkQual(char* header, char* qual, int len,
+    int offset, int maxQual) {
   for (int i = 0; i < len; i++)
     // error if qual < 0 or qual > maxQual
     if (qual[i] < offset || qual[i] > offset + maxQual) {
       char* msg = (char*) memalloc(MAX_SIZE);
-      sprintf(msg, "(range [0, %d], offset %d)  '%c'",
-        maxQual, offset, qual[i]);
-      exit(error(msg, ERROFFSET));
+      sprintf(msg, " '%c': range [0,%d], offset %d ",
+        qual[i], maxQual, offset);
+      readError(header, msg, ERROFFSET);
     }
 }
 
@@ -221,7 +221,7 @@ void processSeq(char** read, int* len, bool i,
 
   // check quality scores
   if (j == QUAL)
-    checkQual(read[j], k, offset, maxQual);
+    checkQual(read[HEAD], read[j], k, offset, maxQual);
 }
 
 /* bool loadReads()
@@ -272,14 +272,14 @@ bool loadReads(File in1, File in2, char** read1,
   if (read2[HEAD][0] != BEGIN || read2[PLUS][0] != PLUSCHAR)
     readError(read2[HEAD], "", ERRFASTQ);
 
+  // check headers
+  checkHeaders(read1[HEAD], read2[HEAD], header, delim);
+
   // process sequence/quality lines
   processSeq(read1, len1, false, SEQ, offset, maxQual);
   processSeq(read1, len1, false, QUAL, offset, maxQual);
   processSeq(read2, len2, true, SEQ, offset, maxQual);
   processSeq(read2, len2, true, QUAL, offset, maxQual);
-
-  // check headers
-  checkHeaders(read1[HEAD], read2[HEAD], header, delim);
 
   return true;
 }
@@ -749,7 +749,6 @@ int readFile(File in1, File in2, File out, File out2,
         read1[QUAL], read2[QUAL + EXTRA], len1, len2, overlap,
         dovetail, doveOverlap, mismatch, maxLen, &best);
 
-fprintf(stderr, "len1=%d, len2=%d, pos=%d\n", len1, len2, pos);
       // print result
       if (pos == len1 - overlap + 1) {
         // stitch failure

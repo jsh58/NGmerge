@@ -93,6 +93,7 @@ Alignment parameters:
   -d               Option to check for dovetailing (with 3' overhangs)
   -e  <int>        Minimum overlap of dovetailed alignments (def. 50)
   -s               Option to produce shortest stitched read
+  -r               Use 'validate' mode (skip alignment)
 I/O options:
   -l  <file>       Log file for stitching results of each read pair
   -f  <file>       FASTQ files for reads that failed stitching
@@ -114,7 +115,7 @@ I/O options:
 
 ## Alignment method <a name="align"></a>
 
-In either analysis mode (Fig. 1), NGmerge evaluates all possible gapless alignments of a pair of reads in attempting to find an optimal one.  The determinations of which alignments are considered, and then which alignment (if any) is both valid and optimal, are made according to several parameters: `-m`, `-p`, `-d`, `-e`, and `-s`.
+In both analysis modes involving alignment (Fig. 1), NGmerge evaluates all possible gapless alignments of a pair of reads in attempting to find an optimal one.  The determinations of which alignments are considered, and then which alignment (if any) is both valid and optimal, are made according to several parameters: `-m`, `-p`, `-d`, `-e`, and `-s`.
 
 NGmerge begins by aligning a pair of reads (R1, R2) such that the minimum overlap parameter (`-m`, default 20bp) is met.  It then checks each possible alignment of the reads until they overlap with no 3' overhangs (Fig. 2A).  If the `-d` option is selected (or in adapter-removal mode [`-a`, which automatically sets `-d`]), NGmerge additionally evaluates dovetailed alignments (with 3' overhangs), down to the minimum length set by the `-e` parameter (Fig. 2B).
 
@@ -359,7 +360,7 @@ As noted previously, the `-d` option is automatically set in adapter-removal mod
 ```
   -r               Use 'validate' mode (skip alignment)
 ```
-This option **must** be specified for NGmerge to run in validate mode.  The input files will be checked to ensure that they follow the fastq format (note that this check is already performed in both alignment modes of NGmerge).
+This option **must** be specified for NGmerge to run in validate mode.  The input files will be checked to ensure that they follow the fastq format (note that this check is also performed in both alignment modes of NGmerge).
 <br><br>
 
 ### I/O files and options <a name="validate-io"></a>

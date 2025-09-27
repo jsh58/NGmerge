@@ -15,13 +15,15 @@ Gaspar JM. BMC Bioinformatics. 2018 Dec 20;19(1):536. [[PubMed](https://www.ncbi
 * [Adapter-removal mode](#adapter)
   * [I/O files and options](#adapter-io)
   * [Alignment parameters](#adapter-aln)
+* [Validate mode](#validate)
+  * [I/O files and options](#validate-io)
 * [Miscellaneous](#misc)
 * [Contact](#contact)
 <br><br>
 
 ## Introduction <a name="intro"></a>
 
-NGmerge operates on paired-end high-throughput sequence reads in two distinct modes (Fig. 1).
+NGmerge operates on paired-end high-throughput sequence reads in three distinct modes, two of which involve alignment of the paired reads (Fig. 1).
 
 In the default [stitch mode](#stitch), NGmerge combines paired-end reads that overlap into a single read that spans the full length of the original DNA fragment (Fig. 1A).  The ends of the merged read are defined by the 5' ends of the original reads.  Reads that fail the stitching process (due to a lack of sufficient overlap, or excessive sequencing errors) are placed into secondary output files, if the user requires them.
 
@@ -31,6 +33,9 @@ The alternative [adapter-removal mode](#adapter) returns the original reads as p
   <img src="figures/figure1.png" alt="Analysis modes of NGmerge" width="700">
   <figcaption><strong>Figure 1.  Analysis modes of NGmerge.</strong>  The diagrams show the paired-end reads (R1, R2) derived from sequencing DNA fragments (white boxes) with sequencing adapters (gray boxes) on either end.</figcaption>
 </figure>
+<br><br>
+
+The third option, [validate mode](#validate), simply verifies that the input files follow the fastq format.
 <br><br>
 
 ### Quick start <a name="quick"></a>
@@ -49,6 +54,12 @@ $ ./NGmerge  -1 sample_R1.fastq.gz  -2 sample_R2.fastq.gz  -o sample_merged.fast
 To produce reads with adapters removed (Fig. 1B): `sample_noadapters_1.fastq.gz` and `sample_noadapters_2.fastq.gz`
 ```
 $ ./NGmerge  -a  -1 sample_R1.fastq.gz  -2 sample_R2.fastq.gz  -o sample_noadapters
+```
+<br>
+
+To produce fastq files that are validated: `sample_valid_1.fastq.gz` and `sample_valid_2.fastq.gz`
+```
+$ ./NGmerge  -r  -1 sample_R1.fastq.gz  -2 sample_R2.fastq.gz  -o sample_valid
 ```
 <br>
 
@@ -72,8 +83,8 @@ Required arguments:
   -2  <file>       Input FASTQ file with reads from reverse direction
   -o  <file>       Output FASTQ file(s):
                    - in 'stitch' mode (def.), the file of merged reads
-                   - in 'adapter-removal' mode (-a), the output files
-                     will be <file>_1.fastq and <file>_2.fastq
+                   - in 'adapter-removal' mode (-a) or 'validate' mode (-r),
+                     the output files will be <file>_1.fastq and <file>_2.fastq
 Alignment parameters:
   -m  <int>        Minimum overlap of the paired-end reads (def. 20)
   -p  <float>      Mismatches to allow in the overlapped region
@@ -293,7 +304,7 @@ This option **must** be specified for NGmerge to run in adapter-removal mode.  A
 
 ### I/O files and options <a name="adapter-io"></a>
 
-#### Input files <a name="stitch-input"></a>
+#### Input files
 
 The formatting of the input files is described [above](#stitch-input).
 <br><br>
@@ -302,8 +313,8 @@ The formatting of the input files is described [above](#stitch-input).
 
 ```
   -o  <file>       Output FASTQ files:
-                   - in 'adapter-removal' mode (-a), the output files
-                     will be <file>_1.fastq and <file>_2.fastq
+                   - in 'adapter-removal' mode (-a) or 'validate' mode (-r),
+                     the output files will be <file>_1.fastq and <file>_2.fastq
 ```
 In adapter-removal mode, all reads are printed to the output files.  The only modifications are the clipping of the 3' overhangs of reads whose alignments have such overhangs.
 <br><br>
@@ -342,6 +353,37 @@ These parameters are described [above](#stitch-aln).
 As noted previously, the `-d` option is automatically set in adapter-removal mode.
 <br><br>
 
+
+## Validate mode <a name="validate"></a>
+
+```
+  -r               Use 'validate' mode (skip alignment)
+```
+This option **must** be specified for NGmerge to run in validate mode.  The input files will be checked to ensure that they follow the fastq format (note that this check is already performed in both alignment modes of NGmerge).
+<br><br>
+
+### I/O files and options <a name="validate-io"></a>
+
+#### Input files
+
+The formatting of the input files is described [above](#stitch-input).
+<br><br>
+
+#### Output files and options
+
+The formatting of the output files is the same as in adapter-removal mode, described [above](#adapter-io).  The only alterations are the removal of any reads whose lengths do not meet the minimum length parameter (`-x <int>`), and, if multiple input files are specified, the concatenation of them into a single pair of output files.  To avoid producing outputs, one may specify `-o /dev/null`.
+
+In validate mode, the following files **cannot** be produced:
+```
+  -f  <file>       FASTQ files for reads that failed stitching
+                     (output as <file>_1.fastq and <file>_2.fastq)
+  -l  <file>       Log file for stitching results of each read pair
+  -j  <file>       Log file for formatted alignments of merged reads
+  -c  <file>       Log file for dovetailed reads (adapter sequences)
+```
+<br><br>
+
+
 ## Miscellaneous <a name="misc"></a>
 
 ```
@@ -366,7 +408,7 @@ The headers of a pair of reads must match, at least up to the first space charac
 ```
   -x  <int>        Minimum length of output reads (def. 1)
 ```
-In either analysis mode, reads that do not meet this minimum length will not be printed to output files. The default value of 1 means that no zero-length reads will be printed. In stitch mode, reads failing to meet the minimum will not be logged in the `-l <file>`.
+In any of the analysis modes, reads that do not meet this minimum length will not be printed to output files.  The default value of 1 means that no zero-length reads will be printed.  No reads will be discarded if one specifies `-x 0`.  In stitch mode, reads failing to meet the minimum will not be logged in the `-l <file>`.
 <br><br>
 
 ```
@@ -387,8 +429,8 @@ Other options:
 Other notes:
 
 * NGmerge cannot gzip-compress multiple output files that are `stdout`.  For example, the following will produce an error:
-  * `-o -  -a` without `-i`
-  * `-f -` without `-a` and without `-i`
+  * `-o -` with `-a` or `-r` but without `-i`
+  * `-f -` without `-a` or `-r` and without `-i`
 <br><br>
 
 ## Contact <a name="contact"></a>

@@ -42,8 +42,8 @@ void usage(void) {
   fprintf(stderr, "  -%c  <file>       Input FASTQ file with reads from reverse direction\n", SECOND);
   fprintf(stderr, "  -%c  <file>       Output FASTQ file(s):\n", OUTFILE);
   fprintf(stderr, "                   - in 'stitch' mode (def.), the file of merged reads\n");
-  fprintf(stderr, "                   - in 'adapter-removal' mode (-%c), the output files\n", ADAPTOPT);
-  fprintf(stderr, "                     will be <file>%s and <file>%s\n", ONEEXT, TWOEXT);
+  fprintf(stderr, "                   - in 'adapter-removal' mode (-%c) or 'validate' mode (-%c),\n", ADAPTOPT, VALIDOPT);
+  fprintf(stderr, "                     the output files will be <file>%s and <file>%s\n", ONEEXT, TWOEXT);
   fprintf(stderr, "Alignment parameters:\n");
   fprintf(stderr, "  -%c  <int>        Minimum overlap of the paired-end reads (def. %d)\n", OVERLAP, DEFOVER);
   fprintf(stderr, "  -%c  <float>      Mismatches to allow in the overlapped region\n", MISMATCH);

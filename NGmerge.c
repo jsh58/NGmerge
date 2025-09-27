@@ -1,14 +1,16 @@
 /*
   John M. Gaspar (jsh58@wildcats.unh.edu)
-  April 2015 (updated 2016, 2017)
+  April 2015 (updated 2016, 2017, 2020, 2025)
 
-  Analyzing paired-end reads for overlaps. Two modes:
+  Analyzing paired-end reads for overlaps. Three modes:
   - 'stitch': producing a single, merged read for reads
      with sufficient overlaps
   - 'adapter-removal': removing adapters (3' overhangs
      of stitched alignment) from individual reads
+  - 'validate': validates that the input file(s) follow
+     the fastq format
 
-  Version 0.3
+  Version 0.5
 */
 
 #include <stdio.h>
@@ -50,6 +52,7 @@ void usage(void) {
   fprintf(stderr, "  -%c               Option to check for dovetailing (with 3' overhangs)\n", DOVEOPT);
   fprintf(stderr, "  -%c  <int>        Minimum overlap of dovetailed alignments (def. %d)\n", DOVEOVER, DEFDOVE);
   fprintf(stderr, "  -%c               Option to produce shortest stitched read\n", MAXOPT);
+  fprintf(stderr, "  -%c               Use 'validate' mode (skip alignment)\n", VALIDOPT);
   fprintf(stderr, "I/O options:\n");
   fprintf(stderr, "  -%c  <file>       Log file for stitching results of each read pair\n", LOGFILE);
   fprintf(stderr, "  -%c  <file>       FASTQ files for reads that failed stitching\n", UNFILE);
@@ -96,11 +99,13 @@ void readError(char* msg1, char* msg2, enum errCode err) {
   for ( ; msg1[j] != '\n' && msg1[j] != '\0'; j++)
     msg[j] = msg1[j];
   if (strlen(msg2)) {
+    // concatenate messages
     msg[j++] = ',';
     for (int k = 0; msg2[k] != '\n' && msg2[k] != '\0'; k++)
       msg[j++] = msg2[k];
   }
-  msg[j] = '\0';  // trim header for err msg
+  msg[j] = '\0';
+  // send message to error()
   exit(error(msg, err));
 }
 
@@ -252,7 +257,7 @@ bool loadReads(File in1, File in2, char** read1,
         if (j == HEAD) {
           flag++;
           read[HEAD][0] = '\0';
-          break;
+          break;  // EOF
         } else
           readError(read[HEAD], "", ERRSEQ);
       }
@@ -712,7 +717,7 @@ int readFile(File in1, File in2, File out, File out2,
     File un1, File un2, bool unOpt, File log,
     bool logOpt, int overlap, bool dovetail, int doveOverlap,
     File dove, bool doveOpt, File aln, int alnOpt,
-    bool adaptOpt, float mismatch, bool maxLen,
+    bool adaptOpt, bool validOpt, float mismatch, bool maxLen,
     int* stitch, int* mLen, int offset, int maxQual,
     char delim, int minLen, bool gz1, bool gz2, bool gzOut,
     bool fjoin, char** match, char** mism, int threads) {
@@ -744,18 +749,20 @@ int readFile(File in1, File in2, File out, File out2,
         &len1, &len2, offset, maxQual, delim, gz1, gz2)) {
 
       // find optimal overlap
+      int pos = 0;
       float best = 1.0f;
-      int pos = findPos(read1[SEQ], read2[SEQ + EXTRA + 1],
-        read1[QUAL], read2[QUAL + EXTRA], len1, len2, overlap,
-        dovetail, doveOverlap, mismatch, maxLen, &best);
+      if (! validOpt)
+        pos = findPos(read1[SEQ], read2[SEQ + EXTRA + 1],
+          read1[QUAL], read2[QUAL + EXTRA], len1, len2, overlap,
+          dovetail, doveOverlap, mismatch, maxLen, &best);
 
       // print result
-      if (pos == len1 - overlap + 1) {
+      if (validOpt || pos == len1 - overlap + 1) {
         // stitch failure
         if (len1 < minLen || len2 < minLen)
           lenRed++;
         else {
-          if (adaptOpt)
+          if (adaptOpt || validOpt)
             printFail(out, out2, 1, log, 0, header, read1,
               read2, gzOut, lock + OUT, lock + LOG);
           else
@@ -844,9 +851,10 @@ void openFiles(char* outFile, File* out, File* out2,
     char* logFile, File* log,
     char* doveFile, File* dove, bool dovetail,
     char* alnFile, File* aln,
-    bool adaptOpt, bool gz, bool interOpt) {
+    bool adaptOpt, bool validOpt, bool gz,
+    bool interOpt) {
 
-  if (adaptOpt) {
+  if (adaptOpt || validOpt) {
     if (interOpt)
       openWrite(outFile, out, gz);
     else if (! strcmp(outFile, "-"))
@@ -1056,8 +1064,8 @@ void runProgram(char* outFile, char* inFile1,
     char* inFile2, bool inter, char* unFile,
     char* logFile, int overlap, bool dovetail,
     char* doveFile, int doveOverlap, char* alnFile,
-    int alnOpt, bool adaptOpt, int gzOut, bool fjoin,
-    bool interOpt, float mismatch, bool maxLen,
+    int alnOpt, bool adaptOpt, bool validOpt, int gzOut,
+    bool fjoin, bool interOpt, float mismatch, bool maxLen,
     int offset, int maxQual, char* qualFile,
     char delim, int minLen, bool verbose, int threads) {
 
@@ -1085,7 +1093,7 @@ void runProgram(char* outFile, char* inFile1,
     // on first iteration, load quals and open outputs
     if (! i) {
       // load quality score profile
-      if (! fjoin && ! adaptOpt)
+      if (! fjoin && ! adaptOpt && ! validOpt)
         saveQual(qualFile, maxQual, &match, &mism);
 
       // open output files
@@ -1096,7 +1104,7 @@ void runProgram(char* outFile, char* inFile1,
       openFiles(outFile, &out, &out2,
         unFile, &un1, &un2, logFile, &log,
         doveFile, &dove, dovetail, alnFile, &aln,
-        adaptOpt, gzOut, interOpt);
+        adaptOpt, validOpt, gzOut, interOpt);
     }
 
     // process files
@@ -1110,9 +1118,9 @@ void runProgram(char* outFile, char* inFile1,
       log, logFile != NULL,
       overlap, dovetail, doveOverlap, dove,
       dovetail && doveFile != NULL, aln, alnOpt,
-      adaptOpt, mismatch, maxLen, &stitch, &mLen,
-      offset, maxQual, delim, minLen, gz1, gz2, gzOut,
-      fjoin, match, mism, threads);
+      adaptOpt, validOpt, mismatch, maxLen, &stitch,
+      &mLen, offset, maxQual, delim, minLen,
+      gz1, gz2, gzOut, fjoin, match, mism, threads);
     tCount += count;
     tStitch += stitch;
     tLen += mLen;
@@ -1122,7 +1130,7 @@ void runProgram(char* outFile, char* inFile1,
       fprintf(stderr, "  Fragments (pairs of reads) analyzed: %d\n", count);
       if (adaptOpt)
         fprintf(stderr, "  Adapters removed: %d\n", stitch);
-      else
+      else if (! validOpt)
         fprintf(stderr, "  Successfully stitched: %d\n", stitch);
       if (mLen)
         fprintf(stderr, "  Discarded for length<%dbp: %d\n", minLen, mLen);
@@ -1148,14 +1156,14 @@ void runProgram(char* outFile, char* inFile1,
     fprintf(stderr, "  Fragments (pairs of reads) analyzed: %d\n", tCount);
     if (adaptOpt)
       fprintf(stderr, "  Adapters removed: %d\n", tStitch);
-    else
+    else if (! validOpt)
       fprintf(stderr, "  Successfully stitched: %d\n", tStitch);
     if (tLen)
       fprintf(stderr, "  Removed for length<%dbp: %d\n", minLen, tLen);
   }
 
   // free memory for qual score profiles
-  if (! fjoin && ! adaptOpt) {
+  if (! fjoin && ! adaptOpt && ! validOpt) {
     for (int i = 0; i < maxQual + 1; i++) {
       free(match[i]);
       free(mism[i]);
@@ -1167,14 +1175,14 @@ void runProgram(char* outFile, char* inFile1,
   // close files
   if (gzOut) {
     if ( gzclose(out.gzf) != Z_OK ||
-        (adaptOpt && ! interOpt && gzclose(out2.gzf) != Z_OK) )
+        ((adaptOpt || validOpt) && ! interOpt && gzclose(out2.gzf) != Z_OK) )
       exit(error(outFile, ERRCLOSE));
     if ( unFile != NULL && (gzclose(un1.gzf) != Z_OK ||
         (! interOpt && gzclose(un2.gzf) != Z_OK)) )
       exit(error(unFile, ERRCLOSE));
   } else {
     if ( fclose(out.f) ||
-        (adaptOpt && ! interOpt && fclose(out2.f)) )
+        ((adaptOpt || validOpt) && ! interOpt && fclose(out2.f)) )
       exit(error(outFile, ERRCLOSE));
     if ( unFile != NULL && (fclose(un1.f) ||
         (! interOpt && fclose(un2.f)) ) )
@@ -1202,9 +1210,9 @@ void getArgs(int argc, char** argv) {
     offset = OFFSET, maxQual = MAXQUAL, minLen = DEFMIN,
     threads = DEFTHR;
   float mismatch = DEFMISM;
-  bool dovetail = false, adaptOpt = false, maxLen = true,
-    diffOpt = false, interOpt = false, fjoin = false,
-    verbose = false;
+  bool dovetail = false, adaptOpt = false, validOpt = false,
+    maxLen = true, diffOpt = false, interOpt = false,
+    fjoin = false, verbose = false;
 
   // parse argv
   int c;
@@ -1215,6 +1223,7 @@ void getArgs(int argc, char** argv) {
       case MAXOPT: maxLen = false; break;
       case DOVEOPT: dovetail = true; break;
       case ADAPTOPT: adaptOpt = true; break;
+      case VALIDOPT: validOpt = true; break;
       case GZOPT: gzOut = 1; break;
       case UNGZOPT: gzOut = -1; break;
       case DIFFOPT: diffOpt = true; break;
@@ -1262,6 +1271,13 @@ void getArgs(int argc, char** argv) {
   if (threads < 1)
     exit(error("", ERRTHREAD));
 
+  // adjust parameters for validation mode
+  if (validOpt) {
+    adaptOpt = false;
+    dovetail = false;
+    unFile = logFile = alnFile = qualFile = NULL;
+  }
+
   // adjust parameters for adapter-removal mode
   if (adaptOpt) {
     dovetail = true;
@@ -1272,9 +1288,9 @@ void getArgs(int argc, char** argv) {
   // send arguments to runProgram()
   runProgram(outFile, inFile1, inFile2, inter, unFile,
     logFile, overlap, dovetail, doveFile, doveOverlap,
-    alnFile, alnOpt, adaptOpt, gzOut, fjoin, interOpt,
-    mismatch, maxLen, offset, maxQual, qualFile, delim,
-    minLen, verbose, threads);
+    alnFile, alnOpt, adaptOpt, validOpt, gzOut, fjoin,
+    interOpt, mismatch, maxLen, offset, maxQual, qualFile,
+    delim, minLen, verbose, threads);
 }
 
 /* int main()

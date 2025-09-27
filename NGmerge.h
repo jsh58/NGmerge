@@ -1,10 +1,10 @@
 /*
   John M. Gaspar (jsh58@wildcats.unh.edu)
-  April 2015 (updated 2016, 2017)
+  April 2015 (updated 2016, 2017, 2020, 2025)
 
   Header file for NGmerge.c.
 */
-#define VERSION     "0.4"
+#define VERSION     "0.5_dev"
 
 // constants
 #define MAX_SIZE    1024    // maximum length of input lines (incl. seq/qual)
@@ -30,7 +30,7 @@ enum fastq { HEAD, SEQ, PLUS, QUAL, FASTQ };  // lines of a fastq read
                             //   revComp(seq) and rev(qual)
 
 // command-line options
-#define OPTIONS     "h1:2:o:f:l:m:p:de:c:saj:bzyigq:u:w:t:x:n:vV"
+#define OPTIONS     "h1:2:o:f:l:m:p:de:c:sarj:bzyigq:u:w:t:x:n:vV"
 #define HELP        'h'
 #define FIRST       '1'
 #define SECOND      '2'
@@ -44,6 +44,7 @@ enum fastq { HEAD, SEQ, PLUS, QUAL, FASTQ };  // lines of a fastq read
 #define DOVEFILE    'c'
 #define MAXOPT      's'
 #define ADAPTOPT    'a'
+#define VALIDOPT    'r'
 #define ALNFILE     'j'
 #define DIFFOPT     'b'
 #define GZOPT       'z'

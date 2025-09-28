@@ -156,7 +156,7 @@ Since the merged reads are defined by the 5' ends of the paired reads' alignment
   -o  <file>       Output FASTQ file:
                    - in 'stitch' mode (def.), the file of merged reads
 ```
-The primary output file in stitch mode is the file of merged reads, in FASTQ format.  It is possible to write to `stdout` with `-o -` (see also `-y`, below).
+The primary output file in stitch mode is the file of merged reads, in FASTQ format.  It is possible to write to `stdout` with `-o -` (see also `-y`, below).  Note that even if multiple input files are specified, only one output will be produced, a concatenation of all the merged reads.
 <br><br>
 
 ```
@@ -317,7 +317,7 @@ The formatting of the input files is described [above](#stitch-input).
                    - in 'adapter-removal' mode (-a) or 'validate' mode (-r),
                      the output files will be <file>_1.fastq and <file>_2.fastq
 ```
-In adapter-removal mode, all reads are printed to the output files.  The only modifications are the clipping of the 3' overhangs of reads whose alignments have such overhangs.
+In adapter-removal mode, all reads are printed to the output files.  The only modifications are the clipping of the 3' overhangs of reads whose alignments have such overhangs, and the discarding of any reads whose lengths do not meet the minimum length parameter (`-x <int>`).  Note that even if multiple input files are specified, only one pair of output files will be produced, a concatenation of all the input reads.
 <br><br>
 
 ```
@@ -372,7 +372,9 @@ The formatting of the input files is described [above](#stitch-input).
 
 #### Output files and options
 
-The formatting of the output files is the same as in adapter-removal mode, described [above](#adapter-io).  The only alterations are the removal of any reads whose lengths do not meet the minimum length parameter (`-x <int>`), and, if multiple input files are specified, the concatenation of them into a single pair of output files.  To avoid producing outputs, one may specify `-o /dev/null`.
+The formatting of the output files is the same as in adapter-removal mode, described [above](#adapter-io).  Reads are discarded for not meeting the minimum length parameter (`-x <int>`), and, if multiple input files are specified, a single pair of output files are produced.  Just like with the other modes of NGmerge, one may specify `-o /dev/null` to avoid producing an output.
+
+To validate single-end fastq files, one may specify the single-end input(s) as *both* `-1` and `-2`.  Redundant outputs can be deleted.
 
 In validate mode, the following files **cannot** be produced:
 ```

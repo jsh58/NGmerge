@@ -4,7 +4,7 @@
 
   Header file for NGmerge.c.
 */
-#define VERSION     "0.5_dev"
+#define VERSION     "0.5"
 
 // constants
 #define MAX_SIZE    1024    // maximum length of input lines (incl. seq/qual)

@@ -2,6 +2,12 @@ NGmerge
 
 Copyright (C) 2017 John M. Gaspar (jsh58@wildcats.unh.edu)
 
+Version 0.5 - Nov 6, 2025
+  * `-r` mode to perform only validation of fastq files
+  * more informative error messages for poorly formatted input files
+  * `-x <int>` argument to remove reads shorter than a given length;
+      default value of 1 means that zero-length reads are removed
+
 Version 0.4 - Mar 16, 2025
   * Multiple input files must be comma-separated (not space-separated
       in quotes, as was previously allowed)

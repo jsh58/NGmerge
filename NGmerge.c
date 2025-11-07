@@ -10,7 +10,7 @@
   - 'validate': validates that the input file(s) follow
      the fastq format
 
-  Version 0.5_dev
+  Version 0.5
 */
 
 #include <stdio.h>
